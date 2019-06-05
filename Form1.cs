@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using ListApp.Properties;
 
 namespace ListApp
 {
@@ -25,11 +26,15 @@ namespace ListApp
             trayIcon.Icon = new Icon("notepad.ico");
             trayIcon.ContextMenu = trayMenu;
             trayIcon.Visible = true;
-            trayIcon.Click += new EventHandler(trayIcon_Click); 
+            trayIcon.Click += new EventHandler(trayIcon_Click);
+            this.richTextBox1.LoadFile("D:\\notes.txt", RichTextBoxStreamType.PlainText);
+            this.Location = Settings.Default.WinLoc;
+            this.Size = Settings.Default.WinSize;
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            Console.WriteLine("On Form closing");
             e.Cancel = true;
             Visible = false;
             ShowInTaskbar = false;
@@ -62,7 +67,31 @@ namespace ListApp
 
         private void OnExit(object sender, EventArgs e)
         {
+            this.richTextBox1.SaveFile("D:/notes.txt", RichTextBoxStreamType.PlainText);
+            Settings.Default.WinLoc = this.Location;
+            Settings.Default.WinSize = this.Size;
+            Settings.Default.Save();
             Application.Exit();
+            System.Environment.Exit(1);
         }
+
+        private static int WM_QUERYENDSESSION = 0x11;
+        protected override void WndProc(ref System.Windows.Forms.Message m)
+        {
+            if (m.Msg == WM_QUERYENDSESSION)
+            {
+                this.richTextBox1.SaveFile("D:/notes.txt", RichTextBoxStreamType.PlainText);
+                Settings.Default.WinLoc = this.Location;
+                Settings.Default.WinSize = this.Size;
+                Settings.Default.Save();
+                Application.Exit();
+                System.Environment.Exit(1);
+            }
+
+            // If this is WM_QUERYENDSESSION, the closing event should be  
+            // raised in the base WndProc.  
+            base.WndProc(ref m);
+
+        } //WndProc   
     }
 }
