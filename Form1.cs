@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using ListApp.Properties;
 
@@ -34,7 +28,6 @@ namespace ListApp
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            Console.WriteLine("On Form closing");
             e.Cancel = true;
             Visible = false;
             ShowInTaskbar = false;
@@ -44,7 +37,6 @@ namespace ListApp
         {
             if (isVisible)
             {
-                //e.Cancel = true;
                 Visible = false;
                 ShowInTaskbar = false;
                 isVisible = false;
@@ -53,7 +45,7 @@ namespace ListApp
             else
             {
                 Visible = true;
-                ShowInTaskbar = true;
+                ShowInTaskbar = false;
                 isVisible = true;
             }
         }
@@ -87,11 +79,7 @@ namespace ListApp
                 Application.Exit();
                 System.Environment.Exit(1);
             }
-
-            // If this is WM_QUERYENDSESSION, the closing event should be  
-            // raised in the base WndProc.  
-            base.WndProc(ref m);
-
-        } //WndProc   
+            base.WndProc(ref m); // If this is WM_QUERYENDSESSION, the closing event should be raised in the base WndProc.  
+        }   
     }
 }
