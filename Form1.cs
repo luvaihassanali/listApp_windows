@@ -47,6 +47,10 @@ namespace ListApp
                 Visible = true;
                 ShowInTaskbar = false;
                 isVisible = true;
+                this.WindowState = FormWindowState.Minimized;
+                this.Show();
+                this.WindowState = FormWindowState.Normal;
+
             }
         }
 
