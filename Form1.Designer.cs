@@ -1,4 +1,6 @@
-﻿namespace ListApp
+﻿using System;
+
+namespace ListApp
 {
     partial class Form1
     {
@@ -68,9 +70,9 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.ResumeLayout(false);
+            this.Deactivate += new System.EventHandler(Form1_Deactivate);
 
         }
-
         #endregion
 
         private System.Windows.Forms.RichTextBox richTextBox1;

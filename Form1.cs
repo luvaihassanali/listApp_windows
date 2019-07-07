@@ -21,7 +21,7 @@ namespace ListApp
             trayIcon.ContextMenu = trayMenu;
             trayIcon.Visible = true;
             trayIcon.Click += new EventHandler(trayIcon_Click);
-            this.richTextBox1.LoadFile("D:\\notes.txt", RichTextBoxStreamType.PlainText);
+            this.richTextBox1.LoadFile("D:/notes.txt", RichTextBoxStreamType.PlainText);
             this.Location = Settings.Default.WinLoc;
             this.Size = Settings.Default.WinSize;
         }
@@ -61,6 +61,14 @@ namespace ListApp
             base.OnLoad(e);
         }
 
+
+        private void Form1_Deactivate(object sender, EventArgs e) {
+            this.richTextBox1.SaveFile("D:/notes.txt", RichTextBoxStreamType.PlainText);
+            Settings.Default.WinLoc = this.Location;
+            Settings.Default.WinSize = this.Size;
+            Settings.Default.Save();
+        }
+
         private void OnExit(object sender, EventArgs e)
         {
             this.richTextBox1.SaveFile("D:/notes.txt", RichTextBoxStreamType.PlainText);
@@ -69,21 +77,6 @@ namespace ListApp
             Settings.Default.Save();
             Application.Exit();
             System.Environment.Exit(1);
-        }
-
-        private static int WM_QUERYENDSESSION = 0x11;
-        protected override void WndProc(ref System.Windows.Forms.Message m)
-        {
-            if (m.Msg == WM_QUERYENDSESSION)
-            {
-                this.richTextBox1.SaveFile("D:/notes.txt", RichTextBoxStreamType.PlainText);
-                Settings.Default.WinLoc = this.Location;
-                Settings.Default.WinSize = this.Size;
-                Settings.Default.Save();
-                Application.Exit();
-                System.Environment.Exit(1);
-            }
-            base.WndProc(ref m); // If this is WM_QUERYENDSESSION, the closing event should be raised in the base WndProc.  
         }   
     }
 }
