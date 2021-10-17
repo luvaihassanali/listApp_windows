@@ -104,9 +104,14 @@ namespace ListApp
         private void OnExit(object sender, EventArgs e)
         {
             this.richTextBox1.SaveFile("notes.rtf", RichTextBoxStreamType.RichText);
+
             Settings.Default.WinLoc = this.Location;
             Settings.Default.WinSize = this.Size;
             Settings.Default.Opacity = this.Opacity;
+
+            trayIcon.Visible = false;
+            trayIcon.Dispose();
+
             Settings.Default.Save();
             Application.Exit();
             System.Environment.Exit(1);
