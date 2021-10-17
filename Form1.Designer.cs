@@ -67,7 +67,6 @@ namespace ListApp
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "Form1";
-            this.Opacity = 0.95D;
             this.Padding = new System.Windows.Forms.Padding(11);
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;

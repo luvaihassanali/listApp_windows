@@ -19,6 +19,7 @@ namespace ListApp
             InitializeComponent();
             
             trayMenu = new ContextMenu();
+            trayMenu.MenuItems.Add("Info", OnInfo);
             trayMenu.MenuItems.Add("Exit", OnExit);
             trayIcon = new NotifyIcon();
             trayIcon.Text = "Notepad";
@@ -39,6 +40,7 @@ namespace ListApp
 
             this.Location = Settings.Default.WinLoc;
             this.Size = Settings.Default.WinSize;
+            this.Opacity = Settings.Default.Opacity;
 
             this.FormBorderStyle = FormBorderStyle.None;
             this.DoubleBuffered = true;
@@ -85,6 +87,7 @@ namespace ListApp
             this.richTextBox1.SaveFile("notes.rtf", RichTextBoxStreamType.RichText);
             Settings.Default.WinLoc = this.Location;
             Settings.Default.WinSize = this.Size;
+            Settings.Default.Opacity = this.Opacity;
             Settings.Default.Save();
 
             //Being extra... make sure Memory usage stays below 6mb in task mgr... 
@@ -93,11 +96,17 @@ namespace ListApp
             GC.WaitForPendingFinalizers();
         }
 
+        private void OnInfo(object sender, EventArgs e)
+        {
+            MessageBox.Show("Ctrl + b: Bold/Unbold \nCtrl + s: Opacity down\nCtrl + d: Opacity up");
+        }
+
         private void OnExit(object sender, EventArgs e)
         {
             this.richTextBox1.SaveFile("notes.rtf", RichTextBoxStreamType.RichText);
             Settings.Default.WinLoc = this.Location;
             Settings.Default.WinSize = this.Size;
+            Settings.Default.Opacity = this.Opacity;
             Settings.Default.Save();
             Application.Exit();
             System.Environment.Exit(1);
@@ -138,6 +147,15 @@ namespace ListApp
 
         private void richTextBox1_KeyPress(object sender, KeyPressEventArgs e)
         {
+            //Console.WriteLine(e.KeyChar);
+            if(e.KeyChar == '')
+            {
+                this.Opacity -= 0.05;
+            } 
+            if(e.KeyChar == '')
+            {
+                this.Opacity += 0.05;
+            }
             if(e.KeyChar == '')
             {
                 if(richTextBox1.SelectionFont.Bold)
@@ -148,6 +166,17 @@ namespace ListApp
                 {
                     richTextBox1.SelectionFont = new Font(richTextBox1.Font, FontStyle.Bold);
                 }                
+            }
+            if(e.KeyChar == '')
+            {
+                if (richTextBox1.SelectionBackColor == Color.Yellow)
+                {
+                    richTextBox1.SelectionBackColor = Color.PaleGoldenrod;
+                }
+                else
+                {
+                    richTextBox1.SelectionBackColor = Color.Yellow;
+                }
             }
         }
     }

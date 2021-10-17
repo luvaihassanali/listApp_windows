@@ -8,5 +8,8 @@
     <Setting Name="WinSize" Type="System.Drawing.Size" Scope="User">
       <Value Profile="(Default)">295, 458</Value>
     </Setting>
+    <Setting Name="Opacity" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
