@@ -86,6 +86,11 @@ namespace ListApp
             Settings.Default.WinLoc = this.Location;
             Settings.Default.WinSize = this.Size;
             Settings.Default.Save();
+
+            //Being extra... make sure Memory usage stays below 6mb in task mgr... 
+            //Without these lines Memory is capped at 10mb anyways...
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         private void OnExit(object sender, EventArgs e)
