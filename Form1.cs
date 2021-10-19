@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
-using System.Threading;
 using System.Windows.Forms;
 using ListApp.Properties;
 
@@ -13,7 +12,8 @@ namespace ListApp
         private ContextMenu trayMenu;
         private Boolean isVisible = true;
         private const int gripOffset = 16;   
-        private const int yOffset = 32;
+        private const int menuBarOffset = 32;
+        
         public Form1()
         {
             InitializeComponent();
@@ -120,17 +120,28 @@ namespace ListApp
         {
             Rectangle rc = new Rectangle(this.ClientSize.Width - gripOffset, this.ClientSize.Height - gripOffset, gripOffset, gripOffset);
             ControlPaint.DrawSizeGrip(e.Graphics, this.BackColor, rc);
-            //rc = new Rectangle(0, 0, this.ClientSize.Width, cCaption);
-            //e.Graphics.FillRectangle(Brushes.DarkBlue, rc);
+            //rc = new Rectangle(0, 0, this.ClientSize.Width, menuBarOffset);
+            //Color color = Color.FromArgb(255, 255, 0);
+            //SolidBrush brush = new SolidBrush(color);
+            //e.Graphics.FillRectangle(brush, rc);
         }
 
         protected override void WndProc(ref Message m)
         {
+            if (m.Msg == 0x20)
+            {  // Trap WM_SETCUROR
+                if ((m.LParam.ToInt32() & 0xffff) == 2)
+                { // Trap HTCAPTION
+                    Cursor.Current = Cursors.Hand;
+                    m.Result = (IntPtr)1;  // Processed
+                    return;
+                }
+            }
             if (m.Msg == 0x84)
             {  // Trap WM_NCHITTEST
                 Point pos = new Point(m.LParam.ToInt32());
                 pos = this.PointToClient(pos);
-                if (pos.Y < yOffset)
+                if (pos.Y < menuBarOffset)
                 {
                     m.Result = (IntPtr)2;  // HTCAPTION
                     return;
@@ -149,29 +160,21 @@ namespace ListApp
             Cursor.Current = Cursors.No;
         }
 
-        private void richTextBox1_KeyPress(object sender, KeyPressEventArgs e)
+        private void richTextBox1_KeyDown(object sender, KeyEventArgs e)
         {
-            //Console.WriteLine(e.KeyChar);
-            if(e.KeyChar == '')
+            if (e.Control && e.KeyCode == Keys.B)
             {
-                this.Opacity -= 0.05;
-            } 
-            if(e.KeyChar == '')
-            {
-                this.Opacity += 0.05;
-            }
-            if(e.KeyChar == '')
-            {
-                if(richTextBox1.SelectionFont.Bold)
+                if (richTextBox1.SelectionFont.Bold)
                 {
                     richTextBox1.SelectionFont = new Font(richTextBox1.Font, FontStyle.Regular);
-                } 
+                }
                 else
                 {
                     richTextBox1.SelectionFont = new Font(richTextBox1.Font, FontStyle.Bold);
-                }                
+                }
             }
-            if(e.KeyChar == '')
+
+            if (e.Control && e.KeyCode == Keys.H)
             {
                 if (richTextBox1.SelectionBackColor == Color.Yellow)
                 {
@@ -181,6 +184,18 @@ namespace ListApp
                 {
                     richTextBox1.SelectionBackColor = Color.Yellow;
                 }
+            }
+
+            if (e.Control && (e.KeyCode == Keys.Oemplus))
+            {
+                this.Opacity += 0.05;
+                e.SuppressKeyPress = true;
+            }
+
+            if (e.Control && e.KeyCode == Keys.OemMinus)
+            {
+                this.Opacity -= 0.05;
+                e.SuppressKeyPress = true;
             }
         }
     }
