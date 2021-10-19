@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using ListApp.Properties;
 
@@ -10,7 +12,6 @@ namespace ListApp
     {
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
-        private Boolean isVisible = true;
         private const int gripOffset = 16;   
         private const int menuBarOffset = 32;
         
@@ -56,21 +57,18 @@ namespace ListApp
 
         private void trayIcon_Click(object sender, System.EventArgs e)
         {
-            if (isVisible)
+            if (this.WindowState == FormWindowState.Normal)
             {
                 Visible = false;
                 ShowInTaskbar = false;
-                isVisible = false;
-                return;
+                this.WindowState = FormWindowState.Minimized;
             }
             else
             {
                 Visible = true;
                 ShowInTaskbar = false;
-                isVisible = true;
-                this.WindowState = FormWindowState.Minimized;
-                this.Show();
                 this.WindowState = FormWindowState.Normal;
+                Activate();
             }
         }
 
@@ -116,16 +114,6 @@ namespace ListApp
             System.Environment.Exit(1);
         }
 
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            Rectangle rc = new Rectangle(this.ClientSize.Width - gripOffset, this.ClientSize.Height - gripOffset, gripOffset, gripOffset);
-            ControlPaint.DrawSizeGrip(e.Graphics, this.BackColor, rc);
-            //rc = new Rectangle(0, 0, this.ClientSize.Width, menuBarOffset);
-            //Color color = Color.FromArgb(255, 255, 0);
-            //SolidBrush brush = new SolidBrush(color);
-            //e.Graphics.FillRectangle(brush, rc);
-        }
-
         protected override void WndProc(ref Message m)
         {
             if (m.Msg == 0x20)
@@ -141,16 +129,25 @@ namespace ListApp
             {  // Trap WM_NCHITTEST
                 Point pos = new Point(m.LParam.ToInt32());
                 pos = this.PointToClient(pos);
+
                 if (pos.Y < menuBarOffset)
                 {
                     m.Result = (IntPtr)2;  // HTCAPTION
                     return;
                 }
+
                 if (pos.X >= this.ClientSize.Width - gripOffset && pos.Y >= this.ClientSize.Height - gripOffset)
                 {
                     m.Result = (IntPtr)17; // HTBOTTOMRIGHT
                     return;
                 }
+
+                if (pos.X <= gripOffset && pos.Y >= this.ClientSize.Height - gripOffset)
+                {
+                    m.Result = (IntPtr)16; // HTBOTTOMLEFT
+                    return;
+                }
+                
             }  
             base.WndProc(ref m);
         }
