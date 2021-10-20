@@ -10,11 +10,12 @@ namespace ListApp
 {
     public partial class Form1 : Form
     {
+        private const int gripOffset = 16;
+        private const int menuBarOffset = 32;
+
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
-        private const int gripOffset = 16;   
-        private const int menuBarOffset = 32;
-        
+        ContextMenuStrip contextMenu;
         public Form1()
         {
             InitializeComponent();
@@ -46,6 +47,22 @@ namespace ListApp
             this.FormBorderStyle = FormBorderStyle.None;
             this.DoubleBuffered = true;
             this.SetStyle(ControlStyles.ResizeRedraw, true);
+
+            contextMenu = new ContextMenuStrip();
+            ToolStripMenuItem copyItem = new ToolStripMenuItem("Copy");
+            copyItem.Image = Properties.Resources.copy;
+            copyItem.Click += DoCopy;
+            contextMenu.Items.Add(copyItem);
+
+            ToolStripMenuItem pasteItem = new ToolStripMenuItem("Paste");
+            pasteItem.Image = Properties.Resources.paste;
+            pasteItem.Click += DoPaste;
+            contextMenu.Items.Add(pasteItem);
+
+            ToolStripMenuItem cutItem = new ToolStripMenuItem("Cut");
+            cutItem.Image = Properties.Resources.cut;
+            cutItem.Click += DoCut;
+            contextMenu.Items.Add(cutItem);
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -194,6 +211,35 @@ namespace ListApp
                 this.Opacity -= 0.05;
                 e.SuppressKeyPress = true;
             }
+        }
+        private void richTextBox1_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Right)
+            {
+                return;
+            }
+
+            contextMenu.Show(this, this.PointToClient(MousePosition));
+        }
+
+        private void DoCopy(object sender, EventArgs e)
+        {
+            Clipboard.SetText(richTextBox1.SelectedText);
+        }
+
+        private void DoPaste(object sender, EventArgs e)
+        {
+            DataFormats.Format myFormat = DataFormats.GetFormat(DataFormats.Text);
+
+            if (richTextBox1.CanPaste(myFormat))
+            {
+                richTextBox1.Paste(myFormat);
+            }
+        }
+
+        private void DoCut(object sender, EventArgs e)
+        {
+            richTextBox1.Cut();
         }
     }
 }
