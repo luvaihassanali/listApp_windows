@@ -28,7 +28,7 @@ namespace ListApp
             trayIcon.Icon = new Icon("notepad.ico");
             trayIcon.ContextMenu = trayMenu;
             trayIcon.Visible = true;
-            trayIcon.DoubleClick += new EventHandler(trayIcon_Click);
+            trayIcon.MouseClick += new MouseEventHandler(trayIcon_Click);
             
             if(!File.Exists("notes.rtf"))
             {
@@ -72,9 +72,12 @@ namespace ListApp
             ShowInTaskbar = false;
         }
 
-        private void trayIcon_Click(object sender, System.EventArgs e)
+        private void trayIcon_Click(object sender, MouseEventArgs e)
         {
-            
+            if(e.Button == MouseButtons.Right)
+            {
+                return;
+            }
             if (this.WindowState == FormWindowState.Normal)
             {
                 Visible = false;
