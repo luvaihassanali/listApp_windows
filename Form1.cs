@@ -107,11 +107,6 @@ namespace ListApp
             Settings.Default.WinSize = this.Size;
             Settings.Default.Opacity = this.Opacity;
             Settings.Default.Save();
-
-            //Being extra... make sure Memory usage stays below 6mb in task mgr... 
-            //Without these lines Memory is capped at 10mb anyways...
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
         }
 
         private void OnInfo(object sender, EventArgs e)
