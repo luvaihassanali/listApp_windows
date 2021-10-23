@@ -127,8 +127,6 @@
     <Content Include="notepad.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Include="Resources\color-picker.png" />
-    <None Include="Resources\color-picker-icon.png" />
     <None Include="Resources\icons8-paste-32.png" />
     <None Include="Resources\icons8-cut-32.png" />
     <None Include="Resources\icons8-copy-32.png" />
