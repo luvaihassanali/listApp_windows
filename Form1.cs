@@ -73,11 +73,15 @@ namespace ListApp
             }
             if (this.WindowState == FormWindowState.Normal)
             {
-                this.WindowState = FormWindowState.Minimized;
+                WindowState = FormWindowState.Minimized;
+                Visible = false;
+                ShowInTaskbar = false;
             }
             else
             {
-                this.WindowState = FormWindowState.Normal;
+                Visible = true;
+                ShowInTaskbar = false;
+                WindowState = FormWindowState.Normal;
                 richTextBox1.Focus();
                 richTextBox1.SelectionStart = richTextBox1.Text.Length;
                 Activate();
