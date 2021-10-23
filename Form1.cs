@@ -16,6 +16,7 @@ namespace ListApp
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
         ContextMenuStrip contextMenu;
+
         public Form1()
         {
             InitializeComponent();
@@ -32,8 +33,7 @@ namespace ListApp
             
             if(!File.Exists("notes.rtf"))
             {
-                FileStream fs = System.IO.File.Create("notes.rtf");
-                fs.Close();
+                this.richTextBox1.SaveFile("notes.rtf", RichTextBoxStreamType.RichText);
             } 
             else
             {
@@ -65,13 +65,6 @@ namespace ListApp
             contextMenu.Items.Add(cutItem);
         }
 
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            e.Cancel = true;
-            Visible = false;
-            ShowInTaskbar = false;
-        }
-
         private void trayIcon_Click(object sender, MouseEventArgs e)
         {
             if(e.Button == MouseButtons.Right)
@@ -80,26 +73,16 @@ namespace ListApp
             }
             if (this.WindowState == FormWindowState.Normal)
             {
-                Visible = false;
-                ShowInTaskbar = false;
                 this.WindowState = FormWindowState.Minimized;
             }
             else
             {
-                Visible = true;
-                ShowInTaskbar = false;
                 this.WindowState = FormWindowState.Normal;
+                richTextBox1.Focus();
+                richTextBox1.SelectionStart = richTextBox1.Text.Length;
                 Activate();
             }
         }
-
-        protected override void OnLoad(EventArgs e)
-        {
-            Visible = false;  
-            ShowInTaskbar = false;
-            base.OnLoad(e);
-        }
-
 
         private void Form1_Deactivate(object sender, EventArgs e) {
             this.richTextBox1.SaveFile("notes.rtf", RichTextBoxStreamType.RichText);
@@ -163,14 +146,24 @@ namespace ListApp
                     m.Result = (IntPtr)16; // HTBOTTOMLEFT
                     return;
                 }
+                if(pos.X <= gripOffset)
+                {
+                    m.Result = (IntPtr)10; // HTLEFT
+                    return;
+                }
+                if(pos.X >= this.ClientSize.Width - gripOffset)
+                {
+                    m.Result = (IntPtr)11; // HTRIGHT
+                    return;
+                }
+                if(pos.Y >= this.ClientSize.Height - gripOffset)
+                {
+                    m.Result = (IntPtr)15; //HTBOTTOM
+                    return;
+                }
                 
             }  
             base.WndProc(ref m);
-        }
-
-        private void Form1_MouseMove(object sender, MouseEventArgs e)
-        {
-            Cursor.Current = Cursors.No;
         }
 
         private void richTextBox1_KeyDown(object sender, KeyEventArgs e)
