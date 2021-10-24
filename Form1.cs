@@ -105,9 +105,12 @@ namespace ListApp
         {
             this.richTextBox1.SaveFile("notes.rtf", RichTextBoxStreamType.RichText);
 
-            Settings.Default.WinLoc = this.Location;
-            Settings.Default.WinSize = this.Size;
-            Settings.Default.Opacity = this.Opacity;
+            if(this.WindowState != FormWindowState.Minimized)
+            {
+                Settings.Default.WinLoc = this.Location;
+                Settings.Default.WinSize = this.Size;
+                Settings.Default.Opacity = this.Opacity;
+            }
 
             trayIcon.Visible = false;
             trayIcon.Dispose();
