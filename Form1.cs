@@ -3,6 +3,8 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 using ListApp.Properties;
+using CefSharp.WinForms;
+using CefSharp;
 
 namespace ListApp
 {
@@ -13,7 +15,7 @@ namespace ListApp
 
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
-        ContextMenuStrip contextMenu;
+        private ChromiumWebBrowser browser;
 
         public Form1()
         {
@@ -36,6 +38,10 @@ namespace ListApp
             this.FormBorderStyle = FormBorderStyle.None;
             this.DoubleBuffered = true;
             this.SetStyle(ControlStyles.ResizeRedraw, true);
+
+            browser = new ChromiumWebBrowser("https://www.icloud.com/notes");
+            browser.Dock = DockStyle.Fill;
+            this.Controls.Add(browser);
         }
 
         private void trayIcon_Click(object sender, MouseEventArgs e)
@@ -86,6 +92,12 @@ namespace ListApp
             Settings.Default.Save();
             Application.Exit();
             System.Environment.Exit(1);
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            browser.Dispose();
+            Cef.Shutdown();
         }
 
         protected override void WndProc(ref Message m)
