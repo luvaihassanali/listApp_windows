@@ -26,7 +26,7 @@ namespace ListApp
             trayMenu.MenuItems.Add("Info", OnInfo);
             trayMenu.MenuItems.Add("Exit", OnExit);
             trayIcon = new NotifyIcon();
-            trayIcon.Text = "Notepad";
+            trayIcon.Text = "List App";
             trayIcon.Icon = new Icon("notepad.ico");
             trayIcon.ContextMenu = trayMenu;
             trayIcon.Visible = true;
@@ -49,7 +49,6 @@ namespace ListApp
 
         private void FrameLoadEnd(object sender, FrameLoadEndEventArgs e)
         {
-            Console.WriteLine(Settings.Default.Zoom);
             browser.SetZoomLevel(Settings.Default.Zoom);
         }
 
@@ -59,27 +58,22 @@ namespace ListApp
             {
                 return;
             }
-            if (this.WindowState == FormWindowState.Normal)
+            if (Visible)
             {
-                WindowState = FormWindowState.Minimized;
                 Visible = false;
                 ShowInTaskbar = false;
-                this.Text = "List App";
             }
             else
             {
                 Visible = true;
                 ShowInTaskbar = false;
-                WindowState = FormWindowState.Normal;  
                 Activate();
-                //rename in task mgr
-                this.Text = "List App";
             }
         }
 
         private void OnInfo(object sender, EventArgs e)
         {
-            MessageBox.Show("Ctrl + OemMinus: Opacity down\nCtrl + OemPlus: Opacity up");
+            MessageBox.Show("Ctrl + OemMinus: Opacity down\nCtrl + OemPlus: Opacity up\n Ctrl + 9: Zoom out\n Ctrl + 0: Zoom in");
         }
 
         private void OnExit(object sender, EventArgs e)
@@ -121,7 +115,6 @@ namespace ListApp
                 task.Wait();
                 temp = task.Result;
             }
-            Console.WriteLine(temp);
             Settings.Default.Zoom = temp;
             Settings.Default.Save();
         }
