@@ -64,13 +64,16 @@ namespace ListApp
                 WindowState = FormWindowState.Minimized;
                 Visible = false;
                 ShowInTaskbar = false;
+                this.Text = "List App";
             }
             else
             {
                 Visible = true;
                 ShowInTaskbar = false;
-                WindowState = FormWindowState.Normal;
+                WindowState = FormWindowState.Normal;  
                 Activate();
+                //rename in task mgr
+                this.Text = "List App";
             }
         }
 
