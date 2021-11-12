@@ -58,5 +58,17 @@ namespace ListApp.Properties {
                 this["Opacity"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public double Zoom {
+            get {
+                return ((double)(this["Zoom"]));
+            }
+            set {
+                this["Zoom"] = value;
+            }
+        }
     }
 }
