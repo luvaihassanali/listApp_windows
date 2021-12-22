@@ -40,7 +40,6 @@ namespace ListApp
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
             this.ClientSize = new System.Drawing.Size(193, 195);
             this.ControlBox = false;
-            this.Controls.Add(this.richTextBox1);
             this.Font = new System.Drawing.Font("Consolas", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ForeColor = System.Drawing.Color.PaleGoldenrod;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -54,6 +53,7 @@ namespace ListApp
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Deactivate += new System.EventHandler(this.Form1_Deactivate);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.ResumeLayout(false);
 
         }
@@ -78,6 +78,8 @@ namespace ListApp
             this.richTextBox1.Text = "";
             this.richTextBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.richTextBox1_KeyDown);
             this.richTextBox1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.richTextBox1_MouseUp);
+            this.Controls.Add(this.richTextBox1);
+            //this.richTextBox1.BringToFront();
         }
         #endregion
 

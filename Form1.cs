@@ -7,7 +7,7 @@ using CefSharp;
 using System.Timers;
 using System.IO;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using Word = Microsoft.Office.Interop.Word;
 
 namespace ListApp
 {
@@ -28,21 +28,22 @@ namespace ListApp
 
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
-        ContextMenuStrip contextMenu;
+        private ContextMenuStrip contextMenu;
         private ChromiumWebBrowser browser;
-        private bool firstCall = true;
-        private System.Timers.Timer t;
+        private System.Timers.Timer setupTimer;
+        private bool firstTimerTickFlag = true;
         private bool onNotesPage = false;
-        private bool closing = false;
-        string pageSource;
+        private bool foundFirstHeaderSymbol = true;
+        private bool importing = true;
+        private string pageSource;
 
         public Form1()
         {
             InitializeComponent();
-            //InitializeTextbox();
             InitializeBrowser();
 
             trayMenu = new ContextMenu();
+            trayMenu.MenuItems.Add("Save", OnSave);
             trayMenu.MenuItems.Add("Info", OnInfo);
             trayMenu.MenuItems.Add("Exit", OnExit);
             trayIcon = new NotifyIcon();
@@ -86,18 +87,26 @@ namespace ListApp
             contextMenu.Items.Add(cutItem);
         }
 
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Console.WriteLine("CEF shutdown");
+            Cef.Shutdown();
+        }
+
         private void InitializeBrowser()
         {
             if (!Cef.IsInitialized) // Check before init
             {
                 CefSettings settings = new CefSettings();
-                //settings.CefCommandLineArgs.Add("disable-web-security");
+                //settings.LogSeverity = LogSeverity.Verbose;
+                settings.CachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\Cache");
+
                 Cef.Initialize(settings, performDependencyCheck: true, browserProcessHandler: null);
             }
 
             browser = new ChromiumWebBrowser("https://www.icloud.com/notes");
             browser.FrameLoadEnd += new EventHandler<CefSharp.FrameLoadEndEventArgs>(FrameLoadEnd);
-            //browser.KeyboardHandler = new KeyboardHandler(this);
+            browser.KeyboardHandler = new KeyboardHandler(this);
             browser.Dock = DockStyle.Fill;
             this.Controls.Add(browser);
         }
@@ -106,20 +115,26 @@ namespace ListApp
         {
             if (e.Url.Contains("https://www.icloud.com/applications/notes3/current/en-us/index.html?rootDomain=www"))
             {
-                onNotesPage = true;
-                t.Interval = 3000;
-                t.Start();
+                if(importing)
+                {
+                    onNotesPage = true;
+                    setupTimer.Interval = 5000;
+                    Console.WriteLine("frameLoadEnd importing");
+                    setupTimer.Start();
+
+                }
             }
             if (e.Frame.IsMain)
             {
                 //browser.SetZoomLevel(Settings.Default.Zoom);
                 if (e.Url.Contains("https://www.icloud.com/notes"))
                 {
-                    t = new System.Timers.Timer();
-                    t.Interval = 2500; // In milliseconds
-                    t.AutoReset = true;
-                    t.Elapsed += new ElapsedEventHandler(TimerElapsed);
-                    t.Start();
+                    setupTimer = new System.Timers.Timer();
+                    setupTimer.Interval = 2500; // In milliseconds
+                    setupTimer.AutoReset = true;
+                    setupTimer.Elapsed += new ElapsedEventHandler(TimerElapsed);
+                    Console.WriteLine("FrameLoadend main");
+                    setupTimer.Start();
 
                 }
             }
@@ -137,23 +152,15 @@ namespace ListApp
             //browser.ShowDevTools();
             IBrowser iBrowser = browser.GetBrowser();
             //List<string> frameNames = iBrowser.GetFrameNames();
-            IFrame iFrame = iBrowser.GetFrame("Widget"); //aid-auth-widget //aid-auth-widget-iFrame
 
-            if (closing)
-            {
-                closing = false;
-                t.Stop();
-                browser.Invoke(new MethodInvoker(delegate { 
-                    browser.Visible = false;
-                    this.Controls.Remove(browser);
-                    browser.Dispose();
-                }));
-                //InitializeTextbox();
-                here
-                return;
-            }
             if (onNotesPage)
             {
+                if(!importing)
+                {
+                    setupTimer.Stop();
+                    return;
+                }
+
                 this.Invoke(new MethodInvoker(delegate
                 {
                     this.Cursor = new Cursor(Cursor.Current.Handle);
@@ -161,43 +168,269 @@ namespace ListApp
                     this.Activate();
                     int left = this.DesktopLocation.X;
                     int top = this.DesktopLocation.Y;
+                    //To-do: find a way to not use mouse
                     Cursor.Position = new Point(left + 200, top + 200);
                     DoMouseClick();
-                    SendKeys.SendWait("^a"); 
-
-                    Task t1 = Task.Run(GetSource);
-                    t1.Wait();
-
-                    //Console.WriteLine(pageSource);
+                    SendKeys.SendWait("^a");
+                    browser.GetFocusedFrame().Copy();
                 }));
 
-                t.Stop();
-                t.Interval = 1000;
-                t.Start();
-                closing = true;
+                setupTimer.Stop();
+                browser.Invoke(new MethodInvoker(delegate
+                {
+                    browser.Visible = false;
+                    this.Controls.Remove(browser);
+                    browser.Dispose();
+                    //Cef.Shutdown();
+                }));
+
+                //To-do use diagnostic tool to find memory usage
+                this.Invoke(new MethodInvoker(delegate
+                {
+                    InitializeTextbox();
+                }));
+
+                InitializeWord(true);
                 return;
             }
 
-            if (firstCall)
+            //To-do: test green text see how it shows up on apple
+            IFrame iFrame = iBrowser.GetFrame("Widget"); //aid-auth-widget //aid-auth-widget-iFrame
+            if (firstTimerTickFlag)
             {
                 iFrame.ExecuteJavaScriptAsync("document.getElementById('account_name_text_field').focus();");
                 iFrame.ExecuteJavaScriptAsync("document.getElementById('account_name_text_field').value=" + '\'' + "luvaihassanali@gmail" + '\'');
                 SendKeys.SendWait(".com");
                 SendKeys.SendWait("{ENTER}");
-                t.Interval = 1000;
-                firstCall = false;
+                setupTimer.Interval = 1000;
+                firstTimerTickFlag = false;
             }
             else
             {
-                string readText = File.ReadAllText("secret.txt");
-                Console.WriteLine(readText);
+                string secret = File.ReadAllText("secret.txt");
                 //To-do: wrap in await
                 iFrame.ExecuteJavaScriptAsync("document.getElementById('password_text_field').focus();");
-                iFrame.ExecuteJavaScriptAsync("document.getElementById('password_text_field').value=" + '\'' + readText + '\'');
+                iFrame.ExecuteJavaScriptAsync("document.getElementById('password_text_field').value=" + '\'' + secret + '\'');
                 SendKeys.SendWait("0");
                 SendKeys.SendWait("{ENTER}");
-                t.Stop();
+                setupTimer.Stop();
             }
+        }
+
+        private void InitializeWord(bool import)
+        {
+            var wordApp = new Word.Application();
+            wordApp.Visible = true;
+            Word.Document currDoc = wordApp.Documents.Add();
+            //object missing = System.Reflection.Missing.Value;
+
+            // Word.Paragraph para1 = currDoc.Content.Paragraphs.Add(ref missing);
+
+            /*para1.KeepTogether = -1;
+            para1.LineSpacingRule = Word.WdLineSpacing.wdLineSpaceSingle;
+            para1.Format.SpaceBefore = 0.0f;
+            para1.Format.SpaceAfter = 0.0f;
+            para1.Range.Font.Name = "Arial";
+            para1.Range.Font.Size = 12;
+            para1.Range.Paste();*/
+
+            wordApp.Selection.Paste();
+            currDoc.Range().ParagraphFormat.LineSpacingRule = Word.WdLineSpacing.wdLineSpaceSingle;
+            object noSpacingStyle = "No Spacing";
+            currDoc.Range().set_Style(noSpacingStyle);
+            currDoc.Range().ParagraphFormat.SpaceBefore = 0.0f;
+            currDoc.Range().ParagraphFormat.SpaceAfter = 0.0f;
+            currDoc.Range().Font.Name = "Arial";
+            currDoc.Range().Font.Size = 12;
+            currDoc.ActiveWindow.Selection.WholeStory();
+            currDoc.ActiveWindow.Selection.Copy();
+
+            if (import)
+            {
+                richTextBox1.Invoke(new MethodInvoker(delegate
+                {
+                    richTextBox1.Focus();
+                    richTextBox1.SelectAll();
+                    richTextBox1.Paste();
+                }));
+
+                Console.WriteLine("Word quit");
+                wordApp.Quit(false);
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
+            else
+            {
+                richTextBox1.Visible = false;
+                this.Controls.Remove(richTextBox1);
+                richTextBox1.Dispose();
+                importing = false;
+                //firstTimerTickFlag = true;
+                //onNotesPage = false;
+                InitializeBrowser();
+            }
+
+            if (import)
+            {
+                richTextBox1.Invoke(new MethodInvoker(delegate
+                {
+                    FixSpacing(richTextBox1, ">", "→");
+                }));
+            } 
+            else
+            {
+                importing = false;
+                if(this.InvokeRequired)
+                {
+                    this.Invoke(new MethodInvoker(delegate
+                    {
+                        this.Cursor = new Cursor(Cursor.Current.Handle);
+                        this.BringToFront();
+                        this.Activate();
+                        int left = this.DesktopLocation.X;
+                        int top = this.DesktopLocation.Y;
+                        //To-do: find a way to not use mouse
+                        Cursor.Position = new Point(left + 200, top + 200);
+                        DoMouseClick();
+                        SendKeys.SendWait("^a");
+                        browser.GetFocusedFrame().Paste();
+                    }));
+                } else
+                {
+                    this.Cursor = new Cursor(Cursor.Current.Handle);
+                    this.BringToFront();
+                    this.Activate();
+                    int left = this.DesktopLocation.X;
+                    int top = this.DesktopLocation.Y;
+                    //To-do: find a way to not use mouse
+                    Cursor.Position = new Point(left + 200, top + 200);
+                    DoMouseClick();
+                    SendKeys.SendWait("^a");
+                    browser.GetFocusedFrame().Paste();
+                }
+            }
+            testing here
+            // make shit await
+            // 
+            //saving -> copy from app into word then word into notes
+            //find a way to fix spacing... once pasted edit header?
+        }
+
+        private void FixSpacing(RichTextBox rtb, String target, String subTarget)
+        {
+            if (target == "")
+            {
+                return;
+            }
+
+            //Replace > except first with \n> but change to * to avoid infinite loop. Then change * back to >
+            int headerStart = rtb.SelectionStart, headerStartIndex = 0, headerIndex;
+            while ((headerIndex = rtb.Text.IndexOf(target, headerStartIndex)) != -1)
+            {
+                if (foundFirstHeaderSymbol)
+                {
+                    foundFirstHeaderSymbol = false;
+                    headerStartIndex = headerIndex + target.Length;
+                    continue;
+                }
+                rtb.SelectionStart = headerIndex;
+                rtb.SelectionLength = 1;
+                rtb.SelectedText = "\n*";
+                headerStartIndex = headerIndex + target.Length;
+
+            }
+            //change * to >
+            target = "*";
+            headerStart = rtb.SelectionStart;
+            headerStartIndex = 0;
+            headerIndex = 0;
+            while ((headerIndex = rtb.Text.IndexOf(target, headerStartIndex)) != -1)
+            {
+                rtb.SelectionStart = headerIndex;
+                rtb.SelectionLength = 1;
+                rtb.SelectedText = ">";
+                headerStartIndex = headerIndex + target.Length;
+
+            }
+            //Replace all → with tab + →
+
+            int subHeaderStart = rtb.SelectionStart, subHeaderStartIndex = 0, subHeaderIndex;
+            while ((subHeaderIndex = rtb.Text.IndexOf(subTarget, subHeaderStartIndex)) != -1)
+            {
+                rtb.SelectionStart = subHeaderIndex;
+                rtb.SelectionLength = 1;
+                rtb.SelectedText = "	*";
+                subHeaderStartIndex = subHeaderIndex + subTarget.Length;
+            }
+
+            target = "*";
+            headerStart = rtb.SelectionStart;
+            headerStartIndex = 0;
+            headerIndex = 0;
+            while ((headerIndex = rtb.Text.IndexOf(target, headerStartIndex)) != -1)
+            {
+                rtb.SelectionStart = headerIndex;
+                rtb.SelectionLength = 1;
+                rtb.SelectedText = "→";
+                headerStartIndex = headerIndex + target.Length;
+            }
+        }
+
+
+        //OnKeyEvent: KeyType: RawKeyDown 0x11 Modifiers: ControlDown, IsLeft
+        //OnKeyEvent: KeyType: KeyUp 0x43 Modifiers: ControlDown
+        //OnKeyEvent: KeyType: KeyUp 0x11 Modifiers: IsLeft
+        private void SendCopyKeys(IBrowser iBrowser)
+        {
+            KeyEvent k = new KeyEvent
+            {
+                WindowsKeyCode = 0x11,
+                Modifiers = CefEventFlags.ControlDown | CefEventFlags.IsLeft,
+                //FocusOnEditableField = true,
+                IsSystemKey = false,
+                Type = KeyEventType.RawKeyDown
+            };
+
+            iBrowser.GetHost().SendKeyEvent(k);
+
+            //Thread.Sleep(100);
+
+            k = new KeyEvent
+            {
+                WindowsKeyCode = 0x43,
+                Modifiers = CefEventFlags.ControlDown,
+                //FocusOnEditableField = true,
+                IsSystemKey = false,
+                Type = KeyEventType.KeyUp
+            };
+
+            iBrowser.GetHost().SendKeyEvent(k);
+
+            //Thread.Sleep(100);
+
+            k = new KeyEvent
+            {
+                WindowsKeyCode = 0x11,
+                Modifiers = CefEventFlags.IsLeft,
+                //FocusOnEditableField = true,
+                IsSystemKey = false,
+                Type = KeyEventType.KeyUp
+            };
+
+            iBrowser.GetHost().SendKeyEvent(k);
+        }
+
+        private void ParseSource()
+        {
+            //Console.WriteLine(pageSource);
+            //<header contenteditable="false">⇨</header>
+            //<footer contenteditable="false">⇨</footer>
+            string[] temp = pageSource.Split(new[] { "<header contenteditable=\"false\">⇨</header>" }, StringSplitOptions.None);
+            string buffer = temp[1];
+            temp = buffer.Split(new[] { "<footer contenteditable=\"false\">⇦</footer>" }, StringSplitOptions.None);
+            buffer = temp[0];
+            Console.WriteLine(buffer);
         }
 
         private async void GetSource()
@@ -225,8 +458,8 @@ namespace ListApp
                 Visible = true;
                 ShowInTaskbar = false;
                 WindowState = FormWindowState.Normal;
-                richTextBox1.Focus();
-                richTextBox1.SelectionStart = richTextBox1.Text.Length;
+                //richTextBox1.Focus();
+                //richTextBox1.SelectionStart = richTextBox1.Text.Length;
                 Activate();
             }
         }
@@ -238,6 +471,17 @@ namespace ListApp
             Settings.Default.WinSize = this.Size;
             Settings.Default.Opacity = this.Opacity;
             Settings.Default.Save();
+        }
+
+        private void OnSave(object sender, EventArgs e)
+        {
+            richTextBox1.Focus();
+            richTextBox1.SelectAll();
+            richTextBox1.Copy();
+
+            InitializeWord(false);
+
+            //InitializeBrowser();
         }
 
         private void OnInfo(object sender, EventArgs e)
@@ -367,22 +611,82 @@ namespace ListApp
 
         private void DoCopy(object sender, EventArgs e)
         {
-            Clipboard.SetText(richTextBox1.SelectedText);
+            richTextBox1.Copy();
         }
 
         private void DoPaste(object sender, EventArgs e)
         {
-            //DataFormats.Format myFormat = DataFormats.GetFormat(DataFormats.Rtf);
-
-            // if (richTextBox1.CanPaste(myFormat))
-            {
-                richTextBox1.Paste();
-            }
+            richTextBox1.Paste();
         }
 
         private void DoCut(object sender, EventArgs e)
         {
             richTextBox1.Cut();
+        }
+    }
+
+    public class KeyboardHandler : IKeyboardHandler
+    {
+        private Form1 form1;
+
+        public KeyboardHandler(Form1 form1)
+        {
+            this.form1 = form1;
+        }
+
+        public bool OnKeyEvent(IWebBrowser browserControl, IBrowser browser, KeyType type, int windowsKeyCode, int nativeKeyCode, CefEventFlags modifiers, bool isSystemKey)
+        {
+            //Console.WriteLine("OnKeyEvent: KeyType: {0} 0x{1:X} Modifiers: {2}", type, windowsKeyCode, modifiers);
+            return false;
+        }
+
+        public bool OnPreKeyEvent(IWebBrowser browserControl, IBrowser browser, KeyType type, int windowsKeyCode, int nativeKeyCode, CefEventFlags modifiers, bool isSystemKey, ref bool isKeyboardShortcut)
+        {
+            /*if (windowsKeyCode == 48 && modifiers == CefEventFlags.ControlDown)
+            {
+                Task<double> task = browser.GetZoomLevelAsync();
+                task.ContinueWith(previous =>
+                {
+                    if (previous.IsCompleted)
+                    {
+                        double currentLevel = previous.Result;
+                        browser.SetZoomLevel(currentLevel + 0.05);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unexpected failure of calling CEF->GetZoomLevelAsync", previous.Exception);
+                    }
+                }, TaskContinuationOptions.ExecuteSynchronously);
+                return true;
+            }
+            if (windowsKeyCode == 57 && modifiers == CefEventFlags.ControlDown)
+            {
+                Task<double> task = browser.GetZoomLevelAsync();
+                task.ContinueWith(previous =>
+                {
+                    if (previous.IsCompleted)
+                    {
+                        double currentLevel = previous.Result;
+                        browser.SetZoomLevel(currentLevel - 0.05);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unexpected failure of calling CEF->GetZoomLevelAsync", previous.Exception);
+                    }
+                }, TaskContinuationOptions.ExecuteSynchronously);
+                return true;
+            }
+            if (windowsKeyCode == 187 && modifiers == CefEventFlags.ControlDown)
+            {
+                form1.BeginInvoke((Action)(() => { form1.Opacity += 0.05; }));
+                return true;
+            }
+            if (windowsKeyCode == 189 && modifiers == CefEventFlags.ControlDown)
+            {
+                form1.BeginInvoke((Action)(() => { form1.Opacity -= 0.05; }));
+                return true;
+            }*/
+            return false;
         }
     }
 }
