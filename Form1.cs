@@ -6,10 +6,7 @@ using CefSharp.WinForms;
 using CefSharp;
 using System.Timers;
 using System.IO;
-using System.Collections.Generic;
 using Word = Microsoft.Office.Interop.Word;
-using System.Diagnostics;
-using System.Threading;
 
 namespace ListApp
 {
@@ -17,7 +14,6 @@ namespace ListApp
     {
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, CallingConvention = System.Runtime.InteropServices.CallingConvention.StdCall)]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
-        private static bool systemShutdown = false;
 
         private const int MOUSEEVENTF_LEFTDOWN = 0x02;
         private const int MOUSEEVENTF_LEFTUP = 0x04;
@@ -40,8 +36,7 @@ namespace ListApp
         private bool importing = true;
         private bool exporting = false;
         private bool exit = false;
-        private bool executeShutdown = true;
-
+        private bool shutdown = false;
         public Form1()
         {
             InitializeComponent();
@@ -95,29 +90,12 @@ namespace ListApp
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if(executeShutdown)
+            if(!shutdown)
             {
-                if (systemShutdown)
-                // Reset the variable because the user might cancel the 
-                // shutdown.
-                {
-                    Save();
-                    Console.WriteLine("saving");
-                    executeShutdown = false;
-                    e.Cancel = true;
-                }
-
-                Console.WriteLine("I got here");
-                if (executeShutdown)
-                {
-                    Save();
-                    Console.WriteLine("saving"); 
-                    executeShutdown = false;
-                    e.Cancel = true;
-                }
-                return;
+                e.Cancel = true;
+                Save();
+                Console.WriteLine("saving");
             }
-            Console.WriteLine("actually exiting");
         }
 
         private void InitializeBrowser()
@@ -188,7 +166,7 @@ namespace ListApp
 
             if (exit)
             {
-                System.Threading.Thread.Sleep(1000);
+                System.Threading.Thread.Sleep(2000);
 
                 Console.WriteLine("Word quit export");
                 wordApp.Quit(false);
@@ -197,20 +175,17 @@ namespace ListApp
                 setupTimer.Stop();
                 setupTimer.AutoReset = false;
 
-                System.Threading.Thread.Sleep(2500);
-
                 this.Invoke(new MethodInvoker(delegate
                 {
+                    browser.Dispose();
                     Console.WriteLine("CEF shutdown");
                     Cef.Shutdown();
                 }));
 
-                if(systemShutdown)
-                {
-                    MessageBox.Show("System shutdown");
-                    System.Diagnostics.Process.Start("shutdown", "/s /t 0");
-                }
 
+                //System.Diagnostics.Process.Start("shutdown", "/s /t 0");
+
+                shutdown = true;
                 Application.Exit();
                 System.Environment.Exit(1);
                 Console.WriteLine("finally closing");
@@ -236,6 +211,9 @@ namespace ListApp
 
                     Word.Document currDoc = wordApp.ActiveDocument;
 
+                    //To-do: Take care of extra spacing
+                    //To-do: Highlight
+                    //To-do: Fix bolding errors with symbols
                     for (int i = 1; i < currDoc.Characters.Count - 2; i++)
                     {
                         Word.Range currCharRange = currDoc.Characters[i];
@@ -246,16 +224,16 @@ namespace ListApp
 
                         if (currNumRep == -35)
                         {
-                            System.Threading.Thread.Sleep(100);
+                            System.Threading.Thread.Sleep(10);
                             SendKeys.Send("{ENTER}");
-                            System.Threading.Thread.Sleep(100);
+                            System.Threading.Thread.Sleep(10);
                             continue;
                         }
-                        System.Threading.Thread.Sleep(100);
+                        System.Threading.Thread.Sleep(10);
                         currCharRange.Copy();
-                        System.Threading.Thread.Sleep(100);
+                        System.Threading.Thread.Sleep(10);
                         browser.GetFocusedFrame().Paste();
-                        System.Threading.Thread.Sleep(100);
+                        System.Threading.Thread.Sleep(10);
                     }                
                 }));
 
@@ -300,7 +278,6 @@ namespace ListApp
                     //Cef.Shutdown();
                 }));
 
-                //To-do use diagnostic tool to find memory usage
                 this.Invoke(new MethodInvoker(delegate
                 {
                     InitializeTextbox();
@@ -537,12 +514,6 @@ namespace ListApp
 
         protected override void WndProc(ref Message m)
         {
-            if (m.Msg == 0x11)
-            { //WM_QUERYENDSESSION
-                Console.WriteLine("queryendsession: this is a logoff, shutdown, or reboot");
-                systemShutdown = true;
-            }
-
             if (m.Msg == 0x20)
             {  // Trap WM_SETCUROR
                 if ((m.LParam.ToInt32() & 0xffff) == 2)
