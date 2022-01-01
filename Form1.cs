@@ -8,6 +8,8 @@ using System.Timers;
 using System.IO;
 using System.Collections.Generic;
 using Word = Microsoft.Office.Interop.Word;
+using System.Diagnostics;
+using System.Threading;
 
 namespace ListApp
 {
@@ -15,8 +17,8 @@ namespace ListApp
     {
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, CallingConvention = System.Runtime.InteropServices.CallingConvention.StdCall)]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
+        private static bool systemShutdown = false;
 
-        //Mouse actions
         private const int MOUSEEVENTF_LEFTDOWN = 0x02;
         private const int MOUSEEVENTF_LEFTUP = 0x04;
         private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
@@ -38,7 +40,7 @@ namespace ListApp
         private bool importing = true;
         private bool exporting = false;
         private bool exit = false;
-        private string pageSource;
+        private bool executeShutdown = true;
 
         public Form1()
         {
@@ -90,10 +92,32 @@ namespace ListApp
             contextMenu.Items.Add(cutItem);
         }
 
+
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Console.WriteLine("CEF shutdown");
-            Cef.Shutdown();
+            if(executeShutdown)
+            {
+                if (systemShutdown)
+                // Reset the variable because the user might cancel the 
+                // shutdown.
+                {
+                    Save();
+                    Console.WriteLine("saving");
+                    executeShutdown = false;
+                    e.Cancel = true;
+                }
+
+                Console.WriteLine("I got here");
+                if (executeShutdown)
+                {
+                    Save();
+                    Console.WriteLine("saving"); 
+                    executeShutdown = false;
+                    e.Cancel = true;
+                }
+                return;
+            }
+            Console.WriteLine("actually exiting");
         }
 
         private void InitializeBrowser()
@@ -165,13 +189,31 @@ namespace ListApp
             if (exit)
             {
                 System.Threading.Thread.Sleep(1000);
+
                 Console.WriteLine("Word quit export");
                 wordApp.Quit(false);
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 setupTimer.Stop();
                 setupTimer.AutoReset = false;
-                return;
+
+                System.Threading.Thread.Sleep(2500);
+
+                this.Invoke(new MethodInvoker(delegate
+                {
+                    Console.WriteLine("CEF shutdown");
+                    Cef.Shutdown();
+                }));
+
+                if(systemShutdown)
+                {
+                    MessageBox.Show("System shutdown");
+                    System.Diagnostics.Process.Start("shutdown", "/s /t 0");
+                }
+
+                Application.Exit();
+                System.Environment.Exit(1);
+                Console.WriteLine("finally closing");
             }
 
             if (exporting)
@@ -246,6 +288,7 @@ namespace ListApp
                     DoMouseClick();
                     SendKeys.SendWait("^a");
                     browser.GetFocusedFrame().Copy();
+                    Console.WriteLine("import copy");
                 }));
 
                 setupTimer.Stop();
@@ -264,32 +307,9 @@ namespace ListApp
                 }));
 
                 InitializeWord(true);
+
                 return;
             }
-
-            /*
-            //To-do: test green text see how it shows up on apple
-            IFrame iFrame = iBrowser.GetFrame("Widget"); //aid-auth-widget //aid-auth-widget-iFrame
-            if (firstTimerTickFlag)
-            {
-                iFrame.ExecuteJavaScriptAsync("document.getElementById('account_name_text_field').focus();");
-                iFrame.ExecuteJavaScriptAsync("document.getElementById('account_name_text_field').value=" + '\'' + "luvaihassanali@gmail" + '\'');
-                SendKeys.SendWait(".com");
-                SendKeys.SendWait("{ENTER}");
-                setupTimer.Interval = 1000;
-                firstTimerTickFlag = false;
-            }
-            else
-            {
-                string secret = File.ReadAllText("secret.txt");
-                //To-do: wrap in await
-                iFrame.ExecuteJavaScriptAsync("document.getElementById('password_text_field').focus();");
-                iFrame.ExecuteJavaScriptAsync("document.getElementById('password_text_field').value=" + '\'' + secret + '\'');
-                SendKeys.SendWait("0");
-                SendKeys.SendWait("{ENTER}");
-                setupTimer.Stop();
-            }
-            */
         }
 
         private void InitializeWord(bool import)
@@ -297,17 +317,6 @@ namespace ListApp
             wordApp = new Word.Application();
             wordApp.Visible = true;
             Word.Document currDoc = wordApp.Documents.Add();
-            //object missing = System.Reflection.Missing.Value;
-
-            // Word.Paragraph para1 = currDoc.Content.Paragraphs.Add(ref missing);
-
-            /*para1.KeepTogether = -1;
-            para1.LineSpacingRule = Word.WdLineSpacing.wdLineSpaceSingle;
-            para1.Format.SpaceBefore = 0.0f;
-            para1.Format.SpaceAfter = 0.0f;
-            para1.Range.Font.Name = "Arial";
-            para1.Range.Font.Size = 12;
-            para1.Range.Paste();*/
 
             wordApp.Selection.Paste();
             currDoc.Range().ParagraphFormat.LineSpacingRule = Word.WdLineSpacing.wdLineSpaceSingle;
@@ -318,8 +327,9 @@ namespace ListApp
             currDoc.Range().Font.Name = "Arial";
             currDoc.Range().Font.Size = 12;
 
-            currDoc.ActiveWindow.Selection.WholeStory(); //is this select all
+            currDoc.ActiveWindow.Selection.WholeStory(); 
             currDoc.ActiveWindow.Selection.Copy();
+            Console.WriteLine("currdoc copy");
 
             if (import)
             {
@@ -342,8 +352,6 @@ namespace ListApp
                 this.Controls.Remove(richTextBox1);
                 richTextBox1.Dispose();
                 importing = false;
-                //firstTimerTickFlag = true;
-                //onNotesPage = false;
                 InitializeBrowser();
             }
 
@@ -456,26 +464,6 @@ namespace ListApp
             iBrowser.GetHost().SendKeyEvent(k);
         }
 
-        private void ParseSource()
-        {
-            //Console.WriteLine(pageSource);
-            //<header contenteditable="false">⇨</header>
-            //<footer contenteditable="false">⇨</footer>
-            string[] temp = pageSource.Split(new[] { "<header contenteditable=\"false\">⇨</header>" }, StringSplitOptions.None);
-            string buffer = temp[1];
-            temp = buffer.Split(new[] { "<footer contenteditable=\"false\">⇦</footer>" }, StringSplitOptions.None);
-            buffer = temp[0];
-            Console.WriteLine(buffer);
-        }
-
-        private async void GetSource()
-        {
-            IBrowser iBrowser = browser.GetBrowser();
-            List<string> frameNames = iBrowser.GetFrameNames();
-            IFrame iFrame = iBrowser.GetFrame(frameNames[2]);
-            pageSource = await iFrame.GetSourceAsync();
-        }
-
         private void trayIcon_Click(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
@@ -510,13 +498,16 @@ namespace ListApp
 
         private void OnSave(object sender, EventArgs e)
         {
+            Save();
+        }
+
+        private void Save()
+        {
             richTextBox1.Focus();
             richTextBox1.SelectAll();
             richTextBox1.Copy();
 
             InitializeWord(false);
-
-            //InitializeBrowser();
         }
 
         private void OnInfo(object sender, EventArgs e)
@@ -539,12 +530,19 @@ namespace ListApp
             trayIcon.Dispose();
 
             Settings.Default.Save();
-            Application.Exit();
-            System.Environment.Exit(1);
+            this.Close();
+            //Application.Exit();
+            //System.Environment.Exit(1);
         }
 
         protected override void WndProc(ref Message m)
         {
+            if (m.Msg == 0x11)
+            { //WM_QUERYENDSESSION
+                Console.WriteLine("queryendsession: this is a logoff, shutdown, or reboot");
+                systemShutdown = true;
+            }
+
             if (m.Msg == 0x20)
             {  // Trap WM_SETCUROR
                 if ((m.LParam.ToInt32() & 0xffff) == 2)
