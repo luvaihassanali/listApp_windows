@@ -29,12 +29,15 @@ namespace ListApp
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
         private ContextMenuStrip contextMenu;
+        private Word.Application wordApp;
         private ChromiumWebBrowser browser;
         private System.Timers.Timer setupTimer;
-        private bool firstTimerTickFlag = true;
+
         private bool onNotesPage = false;
         private bool foundFirstHeaderSymbol = true;
         private bool importing = true;
+        private bool exporting = false;
+        private bool exit = false;
         private string pageSource;
 
         public Form1()
@@ -100,13 +103,12 @@ namespace ListApp
                 CefSettings settings = new CefSettings();
                 //settings.LogSeverity = LogSeverity.Verbose;
                 settings.CachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\Cache");
-
                 Cef.Initialize(settings, performDependencyCheck: true, browserProcessHandler: null);
             }
 
             browser = new ChromiumWebBrowser("https://www.icloud.com/notes");
             browser.FrameLoadEnd += new EventHandler<CefSharp.FrameLoadEndEventArgs>(FrameLoadEnd);
-            browser.KeyboardHandler = new KeyboardHandler(this);
+            //browser.KeyboardHandler = new KeyboardHandler(this);
             browser.Dock = DockStyle.Fill;
             this.Controls.Add(browser);
         }
@@ -115,13 +117,19 @@ namespace ListApp
         {
             if (e.Url.Contains("https://www.icloud.com/applications/notes3/current/en-us/index.html?rootDomain=www"))
             {
-                if(importing)
+                if (importing)
                 {
                     onNotesPage = true;
-                    setupTimer.Interval = 5000;
+                    setupTimer.Interval = 2500;
                     Console.WriteLine("frameLoadEnd importing");
                     setupTimer.Start();
 
+                }
+                else
+                {
+                    Console.WriteLine("frameLoadEnd exporting");
+                    exporting = true;
+                    setupTimer.Start();
                 }
             }
             if (e.Frame.IsMain)
@@ -133,12 +141,13 @@ namespace ListApp
                     setupTimer.Interval = 2500; // In milliseconds
                     setupTimer.AutoReset = true;
                     setupTimer.Elapsed += new ElapsedEventHandler(TimerElapsed);
-                    Console.WriteLine("FrameLoadend main");
-                    setupTimer.Start();
+                    Console.WriteLine("FrameLoadEnd main");
+                    //setupTimer.Start();
 
                 }
             }
         }
+
         public void DoMouseClick()
         {
             //Call the imported function with the cursor's current position
@@ -153,9 +162,73 @@ namespace ListApp
             IBrowser iBrowser = browser.GetBrowser();
             //List<string> frameNames = iBrowser.GetFrameNames();
 
+            if (exit)
+            {
+                System.Threading.Thread.Sleep(1000);
+                Console.WriteLine("Word quit export");
+                wordApp.Quit(false);
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                setupTimer.Stop();
+                setupTimer.AutoReset = false;
+                return;
+            }
+
+            if (exporting)
+            {
+                exporting = false;
+
+                this.Invoke(new MethodInvoker(delegate
+                {
+                    this.Cursor = new Cursor(Cursor.Current.Handle);
+                    this.BringToFront();
+                    this.Activate();
+                    int left = this.DesktopLocation.X;
+                    int top = this.DesktopLocation.Y;
+
+                    //To-do: find a way to not use mouse
+                    Cursor.Position = new Point(left + 200, top + 200);
+                    DoMouseClick();
+
+                    SendKeys.SendWait("^a");
+
+                    Word.Document currDoc = wordApp.ActiveDocument;
+
+                    for (int i = 1; i < currDoc.Characters.Count - 2; i++)
+                    {
+                        Word.Range currCharRange = currDoc.Characters[i];
+                        string currCharStr = currCharRange.Text;
+                        char currChar = currCharStr.ToCharArray()[0];
+                        int currNumRep = currChar - '0';
+                        Console.WriteLine(i + " " + currCharStr + " " + currChar + " " + currNumRep);
+
+                        if (currNumRep == -35)
+                        {
+                            System.Threading.Thread.Sleep(100);
+                            SendKeys.Send("{ENTER}");
+                            System.Threading.Thread.Sleep(100);
+                            continue;
+                        }
+                        System.Threading.Thread.Sleep(100);
+                        currCharRange.Copy();
+                        System.Threading.Thread.Sleep(100);
+                        browser.GetFocusedFrame().Paste();
+                        System.Threading.Thread.Sleep(100);
+                    }                
+                }));
+
+                Console.WriteLine("end of export");
+                setupTimer.Interval = 2000;
+                setupTimer.Start();
+                exporting = false;
+                exit = true;
+
+                return;
+            }
+
             if (onNotesPage)
             {
-                if(!importing)
+                if (!importing)
                 {
                     setupTimer.Stop();
                     return;
@@ -194,6 +267,7 @@ namespace ListApp
                 return;
             }
 
+            /*
             //To-do: test green text see how it shows up on apple
             IFrame iFrame = iBrowser.GetFrame("Widget"); //aid-auth-widget //aid-auth-widget-iFrame
             if (firstTimerTickFlag)
@@ -215,11 +289,12 @@ namespace ListApp
                 SendKeys.SendWait("{ENTER}");
                 setupTimer.Stop();
             }
+            */
         }
 
         private void InitializeWord(bool import)
         {
-            var wordApp = new Word.Application();
+            wordApp = new Word.Application();
             wordApp.Visible = true;
             Word.Document currDoc = wordApp.Documents.Add();
             //object missing = System.Reflection.Missing.Value;
@@ -242,7 +317,8 @@ namespace ListApp
             currDoc.Range().ParagraphFormat.SpaceAfter = 0.0f;
             currDoc.Range().Font.Name = "Arial";
             currDoc.Range().Font.Size = 12;
-            currDoc.ActiveWindow.Selection.WholeStory();
+
+            currDoc.ActiveWindow.Selection.WholeStory(); //is this select all
             currDoc.ActiveWindow.Selection.Copy();
 
             if (import)
@@ -254,7 +330,7 @@ namespace ListApp
                     richTextBox1.Paste();
                 }));
 
-                Console.WriteLine("Word quit");
+                Console.WriteLine("Word quit import");
                 wordApp.Quit(false);
 
                 GC.Collect();
@@ -275,42 +351,14 @@ namespace ListApp
             {
                 richTextBox1.Invoke(new MethodInvoker(delegate
                 {
-                    FixSpacing(richTextBox1, ">", "→");
+                    FixSpacing(richTextBox1, ">", "•");
                 }));
-            } 
+            }
             else
             {
                 importing = false;
-                if(this.InvokeRequired)
-                {
-                    this.Invoke(new MethodInvoker(delegate
-                    {
-                        this.Cursor = new Cursor(Cursor.Current.Handle);
-                        this.BringToFront();
-                        this.Activate();
-                        int left = this.DesktopLocation.X;
-                        int top = this.DesktopLocation.Y;
-                        //To-do: find a way to not use mouse
-                        Cursor.Position = new Point(left + 200, top + 200);
-                        DoMouseClick();
-                        SendKeys.SendWait("^a");
-                        browser.GetFocusedFrame().Paste();
-                    }));
-                } else
-                {
-                    this.Cursor = new Cursor(Cursor.Current.Handle);
-                    this.BringToFront();
-                    this.Activate();
-                    int left = this.DesktopLocation.X;
-                    int top = this.DesktopLocation.Y;
-                    //To-do: find a way to not use mouse
-                    Cursor.Position = new Point(left + 200, top + 200);
-                    DoMouseClick();
-                    SendKeys.SendWait("^a");
-                    browser.GetFocusedFrame().Paste();
-                }
             }
-            testing here
+
             // make shit await
             // 
             //saving -> copy from app into word then word into notes
@@ -353,14 +401,14 @@ namespace ListApp
                 headerStartIndex = headerIndex + target.Length;
 
             }
-            //Replace all → with tab + →
+            //Replace all • with tab + •
 
             int subHeaderStart = rtb.SelectionStart, subHeaderStartIndex = 0, subHeaderIndex;
             while ((subHeaderIndex = rtb.Text.IndexOf(subTarget, subHeaderStartIndex)) != -1)
             {
                 rtb.SelectionStart = subHeaderIndex;
                 rtb.SelectionLength = 1;
-                rtb.SelectedText = "	*";
+                rtb.SelectedText = "    *";
                 subHeaderStartIndex = subHeaderIndex + subTarget.Length;
             }
 
@@ -372,7 +420,7 @@ namespace ListApp
             {
                 rtb.SelectionStart = headerIndex;
                 rtb.SelectionLength = 1;
-                rtb.SelectedText = "→";
+                rtb.SelectedText = "•";
                 headerStartIndex = headerIndex + target.Length;
             }
         }
@@ -381,28 +429,15 @@ namespace ListApp
         //OnKeyEvent: KeyType: RawKeyDown 0x11 Modifiers: ControlDown, IsLeft
         //OnKeyEvent: KeyType: KeyUp 0x43 Modifiers: ControlDown
         //OnKeyEvent: KeyType: KeyUp 0x11 Modifiers: IsLeft
-        private void SendCopyKeys(IBrowser iBrowser)
+        private void SendBrowserKeys(IBrowser iBrowser)
         {
             KeyEvent k = new KeyEvent
-            {
-                WindowsKeyCode = 0x11,
-                Modifiers = CefEventFlags.ControlDown | CefEventFlags.IsLeft,
-                //FocusOnEditableField = true,
-                IsSystemKey = false,
-                Type = KeyEventType.RawKeyDown
-            };
-
-            iBrowser.GetHost().SendKeyEvent(k);
-
-            //Thread.Sleep(100);
-
-            k = new KeyEvent
             {
                 WindowsKeyCode = 0x43,
                 Modifiers = CefEventFlags.ControlDown,
                 //FocusOnEditableField = true,
                 IsSystemKey = false,
-                Type = KeyEventType.KeyUp
+                Type = KeyEventType.KeyDown
             };
 
             iBrowser.GetHost().SendKeyEvent(k);

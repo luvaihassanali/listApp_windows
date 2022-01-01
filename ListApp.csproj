@@ -145,9 +145,6 @@
     <Content Include="notepad.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="secret.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <None Include="Resources\icons8-paste-32.png" />
     <None Include="Resources\icons8-cut-32.png" />
     <None Include="Resources\icons8-copy-32.png" />
