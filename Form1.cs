@@ -54,7 +54,7 @@ namespace ListApp
             {
                 e.Cancel = true;
                 Save();
-                Console.WriteLine("saving");
+                System.Diagnostics.Debug.WriteLine("saving");
             }
         }
 
@@ -179,13 +179,13 @@ namespace ListApp
                 {
                     onNotesPage = true;
                     setupTimer.Interval = 2500;
-                    Console.WriteLine("frameLoadEnd importing");
+                    System.Diagnostics.Debug.WriteLine("frameLoadEnd importing");
                     setupTimer.Start();
 
                 }
                 else
                 {
-                    Console.WriteLine("frameLoadEnd exporting");
+                    System.Diagnostics.Debug.WriteLine("frameLoadEnd exporting");
                     exporting = true;
                     setupTimer.Start();
                 }
@@ -199,7 +199,7 @@ namespace ListApp
                     setupTimer.Interval = 2500; // In milliseconds
                     setupTimer.AutoReset = true;
                     setupTimer.Elapsed += new ElapsedEventHandler(TimerElapsed);
-                    Console.WriteLine("FrameLoadEnd main");
+                    System.Diagnostics.Debug.WriteLine("FrameLoadEnd main");
                     //setupTimer.Start();
 
                 }
@@ -223,7 +223,7 @@ namespace ListApp
                 //wait for final save
                 System.Threading.Thread.Sleep(8000);
 
-                Console.WriteLine("Word quit export");
+                System.Diagnostics.Debug.WriteLine("Word quit export");
                 wordApp.Quit(false);
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
@@ -233,7 +233,7 @@ namespace ListApp
                 this.Invoke(new MethodInvoker(delegate
                 {
                     browser.Dispose();
-                    Console.WriteLine("CEF shutdown");
+                    System.Diagnostics.Debug.WriteLine("CEF shutdown");
                     Cef.Shutdown();
                 }));
 
@@ -274,15 +274,14 @@ namespace ListApp
 
                     Word.Document currDoc = wordApp.ActiveDocument;
 
-                    //To-do: Highlight
-                    //To-do: Fix bolding errors with symbols
+                    //To-do: Highlight?
                     for (int i = 1; i < currDoc.Characters.Count; i++)
                     {
                         Word.Range currCharRange = currDoc.Characters[i];
                         string currCharStr = currCharRange.Text;
                         char currChar = currCharStr.ToCharArray()[0];
                         int currNumRep = currChar - '0';
-                        Console.WriteLine(i + " " + currCharStr + " " + currChar + " " + currNumRep);
+                        System.Diagnostics.Debug.WriteLine(i + " " + currCharStr + " " + currChar + " " + currNumRep);
 
                         if (currNumRep == -35)
                         {
@@ -301,7 +300,7 @@ namespace ListApp
                     }
                 }));
 
-                Console.WriteLine("end of export");
+                System.Diagnostics.Debug.WriteLine("end of export");
                 setupTimer.Interval = 2000;
                 setupTimer.Start();
                 exporting = false;
@@ -334,10 +333,17 @@ namespace ListApp
                     DoMouseClick();
                     SendKeys.SendWait("^a");
                     browser.GetFocusedFrame().Copy();
-                    Console.WriteLine("import copy");
+                    System.Diagnostics.Debug.WriteLine("import copy");
                 }));
 
                 setupTimer.Stop();
+
+                browser.Invoke(new MethodInvoker(delegate
+                {
+                    browser.Visible = false;
+                    this.Controls.Remove(browser);
+                    browser.Dispose();
+                }));
 
                 this.Invoke(new MethodInvoker(delegate
                 {
@@ -360,7 +366,8 @@ namespace ListApp
         private void InitializeWord(bool import)
         {
             wordApp = new Word.Application();
-            wordApp.Visible = true;
+            wordApp.Visible = false;
+
             Word.Document currDoc = wordApp.Documents.Add();
 
             wordApp.Selection.Paste();
@@ -374,7 +381,7 @@ namespace ListApp
 
             currDoc.ActiveWindow.Selection.WholeStory();
             currDoc.ActiveWindow.Selection.Copy();
-            Console.WriteLine("currdoc copy");
+            System.Diagnostics.Debug.WriteLine("currdoc copy");
 
             if (import)
             {
@@ -384,16 +391,9 @@ namespace ListApp
                     richTextBox1.SelectAll();
                     richTextBox1.Paste();
 
-                    browser.Invoke(new MethodInvoker(delegate
-                    {
-                        browser.Visible = false;
-                        this.Controls.Remove(browser);
-                        browser.Dispose();
-                    }));
-
                 }));
 
-                Console.WriteLine("Word quit import");
+                System.Diagnostics.Debug.WriteLine("Word quit import");
                 wordApp.Quit(false);
 
                 GC.Collect();
@@ -555,7 +555,7 @@ namespace ListApp
             trayMenu.MenuItems.Add("Shutdown", OnShutdown);
             //trayMenu.MenuItems.Add("Save", OnSave);
             trayMenu.MenuItems.Add("Info", OnInfo);
-            trayMenu.MenuItems.Add("Exit", OnExit);
+            trayMenu.MenuItems.Add("E&xit", OnExit);
             trayIcon = new NotifyIcon();
             trayIcon.Text = "Notepad";
             trayIcon.Icon = new Icon("notepad.ico");
@@ -592,7 +592,6 @@ namespace ListApp
 
         #region Rich text box functions
 
-        //To-do: add • •
         private void richTextBox1_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Tab)
