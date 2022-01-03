@@ -7,6 +7,8 @@ using CefSharp;
 using System.Timers;
 using System.IO;
 using Word = Microsoft.Office.Interop.Word;
+using System.Resources;
+using System.Configuration;
 
 namespace ListApp
 {
@@ -15,17 +17,13 @@ namespace ListApp
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, CallingConvention = System.Runtime.InteropServices.CallingConvention.StdCall)]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
 
-        private const int MOUSEEVENTF_LEFTDOWN = 0x02;
-        private const int MOUSEEVENTF_LEFTUP = 0x04;
-        private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
-        private const int MOUSEEVENTF_RIGHTUP = 0x10;
-        private const int MOUSEEVENTF_WHEEL = 0x0800;
-
         private const int gripOffset = 16;
         private const int menuBarOffset = 32;
 
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
+        private MenuItem exitMenuItem;
+        private MenuItem shutdownMenuItem;
         private ContextMenuStrip contextMenu;
         private Word.Application wordApp;
         private ChromiumWebBrowser browser;
@@ -38,12 +36,13 @@ namespace ListApp
         private bool exit = false;
         private bool shutdown = false;
         private bool systemShutdown = false;
+        private Font contextMenuFont = new Font("Arial", 12F, FontStyle.Regular);
 
         public Form1()
         {
             InitializeComponent();
-            InitializeBrowser();
-            InitContextMenuAndTrayIcon();
+            //InitializeBrowser();
+            InitializeGui();
         }
 
         #region General form functions
@@ -144,10 +143,9 @@ namespace ListApp
 
         public void DoMouseClick()
         {
-            //Call the imported function with the cursor's current position
             uint X = (uint)Cursor.Position.X;
             uint Y = (uint)Cursor.Position.Y;
-            mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, X, Y, 0, 0);
+            mouse_event(0x02 | 0x04, X, Y, 0, 0); // MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP
         }
 
         #endregion
@@ -281,22 +279,23 @@ namespace ListApp
                         string currCharStr = currCharRange.Text;
                         char currChar = currCharStr.ToCharArray()[0];
                         int currNumRep = currChar - '0';
+                        int threadSleep = Int32.Parse(ConfigurationManager.AppSettings["Sleep"]);
                         System.Diagnostics.Debug.WriteLine(i + " " + currCharStr + " " + currChar + " " + currNumRep);
 
                         if (currNumRep == -35)
                         {
                             //if (i == currDoc.Characters.Count - 1 || i == currDoc.Characters.Count - 2) continue;
-                            System.Threading.Thread.Sleep(5);
+                            System.Threading.Thread.Sleep(threadSleep);
                             SendKeys.Send("{ENTER}");
-                            System.Threading.Thread.Sleep(5);
+                            System.Threading.Thread.Sleep(threadSleep);
                             continue;
                         }
 
-                        System.Threading.Thread.Sleep(5);
+                        System.Threading.Thread.Sleep(threadSleep);
                         currCharRange.Copy();
-                        System.Threading.Thread.Sleep(5);
+                        System.Threading.Thread.Sleep(threadSleep);
                         browser.GetFocusedFrame().Paste();
-                        System.Threading.Thread.Sleep(5);
+                        System.Threading.Thread.Sleep(threadSleep);
                     }
                 }));
 
@@ -338,19 +337,19 @@ namespace ListApp
 
                 setupTimer.Stop();
 
-                browser.Invoke(new MethodInvoker(delegate
-                {
-                    browser.Visible = false;
-                    this.Controls.Remove(browser);
-                    browser.Dispose();
-                }));
-
                 this.Invoke(new MethodInvoker(delegate
                 {
                     InitializeTextbox();
                 }));
 
                 InitializeWord(true);
+
+                browser.Invoke(new MethodInvoker(delegate
+                {
+                    browser.Visible = false;
+                    this.Controls.Remove(browser);
+                    browser.Dispose();
+                }));
 
                 return;
 
@@ -505,7 +504,7 @@ namespace ListApp
 
         #endregion
 
-        #region Context menu functions 
+        #region Gui functions 
 
         private void OnShutdown(object sender, EventArgs e)
         {
@@ -548,21 +547,8 @@ namespace ListApp
             this.Close();
         }
 
-        private void InitContextMenuAndTrayIcon()
+        private void InitializeGui()
         {
-            //To-do: icons
-            trayMenu = new ContextMenu();
-            trayMenu.MenuItems.Add("Shutdown", OnShutdown);
-            //trayMenu.MenuItems.Add("Save", OnSave);
-            trayMenu.MenuItems.Add("Info", OnInfo);
-            trayMenu.MenuItems.Add("E&xit", OnExit);
-            trayIcon = new NotifyIcon();
-            trayIcon.Text = "Notepad";
-            trayIcon.Icon = new Icon("notepad.ico");
-            trayIcon.ContextMenu = trayMenu;
-            trayIcon.Visible = true;
-            trayIcon.MouseClick += new MouseEventHandler(trayIcon_Click);
-
             this.Location = Settings.Default.WinLoc;
             this.Size = Settings.Default.WinSize;
             this.Opacity = Settings.Default.Opacity;
@@ -571,7 +557,44 @@ namespace ListApp
             this.DoubleBuffered = true;
             this.SetStyle(ControlStyles.ResizeRedraw, true);
 
+            trayMenu = new ContextMenu();
+
+            exitMenuItem = new MenuItem();
+            exitMenuItem.Text = "  Exit Application"; 
+            exitMenuItem.Click += new EventHandler(OnExit);
+            exitMenuItem.OwnerDraw = true;
+            exitMenuItem.DrawItem += new DrawItemEventHandler(DrawExitMenuItem);
+            exitMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureExitMenuItem);
+
+            /*infoMenuItem = new MenuItem();
+            infoMenuItem.Text = " Information"; // " Info"
+            infoMenuItem.Click += new EventHandler(OnInfo);
+            infoMenuItem.OwnerDraw = true;
+            infoMenuItem.DrawItem += new DrawItemEventHandler(DrawInfoMenuItem);
+            infoMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureInfoMenuItem);*/
+
+            shutdownMenuItem = new MenuItem();
+            shutdownMenuItem.Text = "  System Shutdown";
+            shutdownMenuItem.Click += new EventHandler(OnShutdown);
+            shutdownMenuItem.OwnerDraw = true;
+            shutdownMenuItem.DrawItem += new DrawItemEventHandler(DrawShutdownMenuItem);
+            shutdownMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureShutdownMenuItem);
+
+            trayMenu.MenuItems.AddRange(new MenuItem[]
+            {
+                exitMenuItem, shutdownMenuItem //infoMenuItem, 
+            });
+
+            trayIcon = new NotifyIcon();
+            trayIcon.Text = "Notepad";
+            trayIcon.Icon = new Icon("notepad.ico");
+            trayIcon.ContextMenu = trayMenu;
+            trayIcon.Visible = true;
+            trayIcon.MouseClick += new MouseEventHandler(trayIcon_Click);
+
             contextMenu = new ContextMenuStrip();
+            contextMenu.BackColor = SystemColors.Menu; //Color.FromArgb(242, 242, 242);
+
             ToolStripMenuItem copyItem = new ToolStripMenuItem("Copy");
             copyItem.Image = Properties.Resources.copy;
             copyItem.Click += DoCopy;
@@ -587,6 +610,292 @@ namespace ListApp
             cutItem.Click += DoCut;
             contextMenu.Items.Add(cutItem);
         }
+
+        #region Context menu draw/measure functions
+
+        // https://stackoverflow.com/questions/6623672/how-to-put-an-icon-in-a-menuitem
+        // https://www.codeproject.com/Articles/4332/Putting-Images-Next-To-MenuItems-In-A-Menu-in-C#_articleTop
+
+        #region shutdown 
+
+        private void MeasureShutdownMenuItem(object sender, MeasureItemEventArgs e)
+        {
+            MenuItem shutdownMenuItem = (MenuItem)sender;
+            // Get standard menu font so that the text in this
+            // menu rectangle doesn't look funny with a
+            // different font
+            Font menuFont = contextMenuFont;
+
+            StringFormat stringFormat = new StringFormat();
+            SizeF sizeFloat = e.Graphics.MeasureString(shutdownMenuItem.Text, menuFont, 1000, stringFormat);
+
+            // Get image so size can be computed
+            Bitmap bitmapImage = Properties.Resources.power_grey;
+
+            // Add image height and width  to the text height and width when 
+            // drawn with selected font (got that from measurestring method)
+            // to compute the total height and width needed for the rectangle
+            e.ItemWidth = (int)Math.Ceiling(sizeFloat.Width) + bitmapImage.Width; 
+            e.ItemHeight = bitmapImage.Height; //(int)Math.Ceiling(sizeFloat.Height)
+        }
+
+        private void DrawShutdownMenuItem(object sender, DrawItemEventArgs e)
+        {
+            MenuItem shutdownMenuItem = (MenuItem)sender;
+
+            // Get standard menu font so that the text in this
+            // menu rectangle doesn't look funny with a
+            // different font
+            Font menuFont = contextMenuFont;
+
+            // Get a brush to use for painting
+            SolidBrush menuBrush = null;
+
+            // Determine menu brush for painting
+            if (shutdownMenuItem.Enabled == false)
+            {
+                // disabled text if menu item not enabled
+                menuBrush = new SolidBrush(SystemColors.GrayText);
+            }
+            else // Normal (enabled) text
+            {
+                if ((e.State & DrawItemState.Selected) != 0)
+                {
+                    // Text color when selected (highlighted)
+                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                }
+                else
+                {
+                    // Text color during normal drawing
+                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                }
+            }
+
+            // Center the text portion (out to side of image portion)
+            StringFormat stringFormat = new StringFormat();
+            //stringFormat.LineAlignment = System.Drawing.StringAlignment.Center;
+
+            // Get image associated with this menu item
+            Bitmap bitmapImage = Properties.Resources.power_grey;
+
+            // Rectangle for image portion
+            Rectangle rectImage = e.Bounds;
+
+            // Set image rectangle same dimensions as image
+            rectImage.Width = bitmapImage.Width;
+            rectImage.Height = bitmapImage.Height;
+
+            // Rectanble for text portion
+            Rectangle rectText = e.Bounds;
+
+            // set wideth to x value of text portion
+            rectText.X += rectImage.Width;
+
+            // Start Drawing the menu rectangle
+
+            // Fill rectangle with proper background color
+            // [use this instead of e.DrawBackground() ]
+            if ((e.State & DrawItemState.Selected) != 0)
+            {
+                // Selected color
+                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
+                bitmapImage = Properties.Resources.power_red;
+            }
+            else
+            {
+                // Normal background color (when not selected)
+                e.Graphics.FillRectangle(SystemBrushes.Menu, e.Bounds);
+            }
+
+            // Draw image portion
+            e.Graphics.DrawImage(bitmapImage, rectImage);
+
+            // Draw rectangle portion
+            //
+            // text portion
+            // using menu font
+            // using brush determined earlier
+            // Start at offset of image rect already drawn
+            // Total height,divided to be centered
+            // Formated string
+            e.Graphics.DrawString(shutdownMenuItem.Text,
+                   menuFont,
+                   menuBrush,
+                   e.Bounds.Left + bitmapImage.Width,
+                   e.Bounds.Top + ((e.Bounds.Height - menuFont.Height) / 2),
+                   stringFormat);
+        }
+
+        #endregion
+
+        #region info
+
+        private void MeasureInfoMenuItem(object sender, MeasureItemEventArgs e)
+        {
+            MenuItem infoMenuItem = (MenuItem)sender;
+            Font menuFont = contextMenuFont;
+            StringFormat stringFormat = new StringFormat();
+            SizeF sizeFloat = e.Graphics.MeasureString(infoMenuItem.Text, menuFont, 1000, stringFormat);
+
+            // Get image so size can be computed
+            Bitmap bitmapImage = Properties.Resources.copy;
+
+            e.ItemWidth = (int)Math.Ceiling(sizeFloat.Width) + bitmapImage.Width;
+            e.ItemHeight = (int)Math.Ceiling(sizeFloat.Height) + bitmapImage.Height;
+        }
+
+        private void DrawInfoMenuItem(object sender, DrawItemEventArgs e)
+        {
+            MenuItem infoMenuItem = (MenuItem)sender;
+
+            // Default menu font
+            Font menuFont = contextMenuFont;
+            SolidBrush menuBrush = null;
+
+            // Determine menu brush for painting
+            if (infoMenuItem.Enabled == false)
+            {
+                // disabled text
+                menuBrush = new SolidBrush(SystemColors.GrayText);
+            }
+            else // Normal (enabled) text
+            {
+                if ((e.State & DrawItemState.Selected) != 0)
+                {
+                    // Text color when selected (highlighted)
+                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                }
+                else
+                {
+                    // Text color during normal drawing
+                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                }
+            }
+
+            // Center the text portion (out to side of image portion)
+            StringFormat stringFormat = new StringFormat();
+            stringFormat.LineAlignment = System.Drawing.StringAlignment.Center;
+
+            // Image for this menu item
+            Bitmap bitmapImage = Properties.Resources.copy;
+
+            // Rectangle for image portion
+            Rectangle rectImage = e.Bounds;
+
+            // Set image rectangle same dimensions as image
+            rectImage.Width = bitmapImage.Width;
+            rectImage.Height = bitmapImage.Height;
+            Rectangle rectText = e.Bounds;
+            rectText.X += rectImage.Width;
+
+            // Start Drawing the menu rectangle
+
+            // Fill rectangle with proper background [use this instead of e.DrawBackground() ]
+            if ((e.State & DrawItemState.Selected) != 0)
+            {
+                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
+            }
+            else
+            {
+                e.Graphics.FillRectangle(SystemBrushes.Menu, e.Bounds);
+            }
+
+            e.Graphics.DrawImage(bitmapImage, rectImage);
+            e.Graphics.DrawString(infoMenuItem.Text,
+                menuFont, menuBrush,
+                e.Bounds.Left + bitmapImage.Width,
+                e.Bounds.Top + ((e.Bounds.Height - menuFont.Height) / 2),
+                stringFormat);
+        }
+
+        #endregion
+
+        #region exit
+
+        private void MeasureExitMenuItem(object sender, MeasureItemEventArgs e)
+        {
+            MenuItem exitMenuItem = (MenuItem)sender;
+            Font menuFont = contextMenuFont;
+            StringFormat stringFormat = new StringFormat();
+            SizeF sizeFloat = e.Graphics.MeasureString(exitMenuItem.Text, menuFont, 1000, stringFormat);
+
+            // Get image so size can be computed
+            Bitmap bitmapImage = Properties.Resources.close_grey;
+
+            e.ItemWidth = (int)Math.Ceiling(sizeFloat.Width) + bitmapImage.Width;
+            e.ItemHeight = bitmapImage.Height; //(int)Math.Ceiling(sizeFloat.Height) 
+        }
+
+        private void DrawExitMenuItem(object sender, DrawItemEventArgs e)
+        {
+            MenuItem exitMenuItem = (MenuItem)sender;
+
+            // Default menu font
+            Font menuFont = contextMenuFont;
+            SolidBrush menuBrush = null;
+
+            // Determine menu brush for painting
+            if (exitMenuItem.Enabled == false)
+            {
+                // disabled text
+                menuBrush = new SolidBrush(SystemColors.GrayText);
+            }
+            else // Normal (enabled) text
+            {
+                if ((e.State & DrawItemState.Selected) != 0)
+                {
+                    // Text color when selected (highlighted)
+                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                }
+                else
+                {
+                    // Text color during normal drawing
+                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                }
+            }
+
+            // Center the text portion (out to side of image portion)
+            StringFormat stringFormat = new StringFormat();
+            //stringFormat.LineAlignment = System.Drawing.StringAlignment.Center;
+
+            // Image for this menu item
+            Bitmap bitmapImage = Properties.Resources.close_grey;
+
+            // Rectangle for image portion
+            Rectangle rectImage = e.Bounds;
+
+            // Set image rectangle same dimensions as image
+            rectImage.Width = bitmapImage.Width;
+            rectImage.Height = bitmapImage.Height;
+            Rectangle rectText = e.Bounds;
+            rectText.X += rectImage.Width;
+
+            // Start Drawing the menu rectangle
+
+            // Fill rectangle with proper background 
+            // [use this instead of e.DrawBackground() ]
+            if ((e.State & DrawItemState.Selected) != 0)
+            {
+                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
+                bitmapImage = Properties.Resources.close_red;
+            }
+            else
+            {
+                e.Graphics.FillRectangle(SystemBrushes.Menu, e.Bounds);
+            }
+
+            e.Graphics.DrawImage(bitmapImage, rectImage);
+            e.Graphics.DrawString(exitMenuItem.Text,
+                menuFont,
+                menuBrush,
+                e.Bounds.Left + bitmapImage.Width,
+                e.Bounds.Top + ((e.Bounds.Height - menuFont.Height) / 2),
+                stringFormat);
+        }
+
+        #endregion
+
+        #endregion
 
         #endregion
 

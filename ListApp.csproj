@@ -97,6 +97,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -148,9 +149,13 @@
     <Content Include="notepad.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Include="Resources\icons8-paste-32.png" />
-    <None Include="Resources\icons8-cut-32.png" />
-    <None Include="Resources\icons8-copy-32.png" />
+    <None Include="Resources\close-red.png" />
+    <None Include="Resources\close-grey.png" />
+    <None Include="Resources\power-red.png" />
+    <None Include="Resources\power-grey.png" />
+    <None Include="Resources\paste.png" />
+    <None Include="Resources\cut.png" />
+    <None Include="Resources\copy.png" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="Microsoft.Office.Core">
