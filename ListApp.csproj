@@ -148,6 +148,13 @@
     <Content Include="notepad.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="Resources\power.png" />
+    <None Include="Resources\paste.png" />
+    <None Include="Resources\info.png" />
+    <None Include="Resources\cut.png" />
+    <None Include="Resources\copy.png" />
+    <None Include="Resources\close.png" />
+    <None Include="Resources\icons8-power-64.png" />
     <None Include="Resources\icons8-paste-32.png" />
     <None Include="Resources\icons8-cut-32.png" />
     <None Include="Resources\icons8-copy-32.png" />
