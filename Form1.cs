@@ -899,8 +899,6 @@ namespace ListApp
 
         #endregion
 
-        #endregion
-
         #region Rich text box functions
 
         private void richTextBox1_KeyDown(object sender, KeyEventArgs e)
