@@ -41,7 +41,7 @@ namespace ListApp
         public Form1()
         {
             InitializeComponent();
-            //InitializeBrowser();
+            InitializeBrowser();
             InitializeGui();
         }
 
@@ -725,6 +725,8 @@ namespace ListApp
                    e.Bounds.Top + ((e.Bounds.Height - menuFont.Height) / 2),
                    stringFormat);
         }
+
+        #endregion
 
         #endregion
 
