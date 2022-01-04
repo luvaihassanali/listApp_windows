@@ -512,6 +512,16 @@ namespace ListApp
 
         private void OnShutdown(object sender, EventArgs e)
         {
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+
+            if (this.WindowState != FormWindowState.Minimized)
+            {
+                Settings.Default.WinLoc = this.Location;
+                Settings.Default.WinSize = this.Size;
+                Settings.Default.Opacity = this.Opacity;
+            }
+            Settings.Default.Save();
+
             systemShutdown = true;
             Save();
         }
@@ -537,6 +547,8 @@ namespace ListApp
 
         private void OnExit(object sender, EventArgs e)
         {
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+
             if (this.WindowState != FormWindowState.Minimized)
             {
                 Settings.Default.WinLoc = this.Location;
