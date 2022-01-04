@@ -7,7 +7,6 @@ using CefSharp;
 using System.Timers;
 using System.IO;
 using Word = Microsoft.Office.Interop.Word;
-using System.Resources;
 using System.Configuration;
 
 namespace ListApp
@@ -365,7 +364,7 @@ namespace ListApp
         private void InitializeWord(bool import)
         {
             wordApp = new Word.Application();
-            wordApp.Visible = true;
+            wordApp.Visible = false;
 
             Word.Document currDoc = wordApp.Documents.Add();
 
