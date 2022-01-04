@@ -63,9 +63,9 @@ namespace ListApp.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap close_grey {
+        internal static System.Drawing.Bitmap close_off {
             get {
-                object obj = ResourceManager.GetObject("close_grey", resourceCulture);
+                object obj = ResourceManager.GetObject("close_off", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -73,9 +73,29 @@ namespace ListApp.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap close_red {
+        internal static System.Drawing.Bitmap close_on {
             get {
-                object obj = ResourceManager.GetObject("close_red", resourceCulture);
+                object obj = ResourceManager.GetObject("close_on", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap cloud_off {
+            get {
+                object obj = ResourceManager.GetObject("cloud_off", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap cloud_on {
+            get {
+                object obj = ResourceManager.GetObject("cloud_on", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -103,6 +123,26 @@ namespace ListApp.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap idea_off {
+            get {
+                object obj = ResourceManager.GetObject("idea_off", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap idea_on {
+            get {
+                object obj = ResourceManager.GetObject("idea_on", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap paste {
             get {
                 object obj = ResourceManager.GetObject("paste", resourceCulture);
@@ -113,9 +153,9 @@ namespace ListApp.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap power_grey {
+        internal static System.Drawing.Bitmap power_off {
             get {
-                object obj = ResourceManager.GetObject("power_grey", resourceCulture);
+                object obj = ResourceManager.GetObject("power_off", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -123,9 +163,9 @@ namespace ListApp.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap power_red {
+        internal static System.Drawing.Bitmap power_on {
             get {
-                object obj = ResourceManager.GetObject("power_red", resourceCulture);
+                object obj = ResourceManager.GetObject("power_on", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

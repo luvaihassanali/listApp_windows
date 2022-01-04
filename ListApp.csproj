@@ -149,10 +149,14 @@
     <Content Include="notepad.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Include="Resources\close-red.png" />
-    <None Include="Resources\close-grey.png" />
-    <None Include="Resources\power-red.png" />
-    <None Include="Resources\power-grey.png" />
+    <None Include="Resources\idea-on.png" />
+    <None Include="Resources\idea-off.png" />
+    <None Include="Resources\cloud-on.png" />
+    <None Include="Resources\cloud-off.png" />
+    <None Include="Resources\close-on.png" />
+    <None Include="Resources\close-off.png" />
+    <None Include="Resources\power-on.png" />
+    <None Include="Resources\power-off.png" />
     <None Include="Resources\paste.png" />
     <None Include="Resources\cut.png" />
     <None Include="Resources\copy.png" />
