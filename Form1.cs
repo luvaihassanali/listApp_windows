@@ -36,7 +36,7 @@ namespace ListApp
         private bool exit = false;
         private bool shutdown = false;
         private bool systemShutdown = false;
-        private Font contextMenuFont = new Font("Arial", 12F, FontStyle.Regular);
+        private Font contextMenuFont = new Font("Calibri", 12F, FontStyle.Regular);
 
         public Form1()
         {
@@ -261,7 +261,6 @@ namespace ListApp
                     int left = this.DesktopLocation.X;
                     int top = this.DesktopLocation.Y;
 
-                    //To-do: find a way to not use mouse
                     Cursor.Position = new Point(left + 200, top + 200);
                     DoMouseClick();
 
@@ -269,7 +268,6 @@ namespace ListApp
                     SendKeys.SendWait("{BACKSPACE}");
 
                     System.Threading.Thread.Sleep(1000);
-
                     Word.Document currDoc = wordApp.ActiveDocument;
 
                     //To-do: Highlight?
@@ -327,9 +325,10 @@ namespace ListApp
                     this.Activate();
                     int left = this.DesktopLocation.X;
                     int top = this.DesktopLocation.Y;
-                    //To-do: find a way to not use mouse
+
                     Cursor.Position = new Point(left + 200, top + 200);
                     DoMouseClick();
+
                     SendKeys.SendWait("^a");
                     browser.GetFocusedFrame().Copy();
                     System.Diagnostics.Debug.WriteLine("import copy");
@@ -349,6 +348,7 @@ namespace ListApp
                     browser.Visible = false;
                     this.Controls.Remove(browser);
                     browser.Dispose();
+                    //Cef.Shutdown();
                 }));
 
                 return;
@@ -365,17 +365,19 @@ namespace ListApp
         private void InitializeWord(bool import)
         {
             wordApp = new Word.Application();
-            wordApp.Visible = false;
+            wordApp.Visible = true;
 
             Word.Document currDoc = wordApp.Documents.Add();
 
-            wordApp.Selection.Paste();
+            wordApp.Selection.PasteAndFormat(Word.WdRecoveryType.wdFormatPlainText);
             currDoc.Range().ParagraphFormat.LineSpacingRule = Word.WdLineSpacing.wdLineSpaceSingle;
-            object noSpacingStyle = "No Spacing";
-            currDoc.Range().set_Style(noSpacingStyle);
+
+            //Hide scroll bar
+            //object noSpacingStyle = "No Spacing";
+            //currDoc.Range().set_Style(noSpacingStyle);
             currDoc.Range().ParagraphFormat.SpaceBefore = 0.0f;
             currDoc.Range().ParagraphFormat.SpaceAfter = 0.0f;
-            currDoc.Range().Font.Name = "Arial";
+            currDoc.Range().Font.Name = "Calibri";
             currDoc.Range().Font.Size = 12;
 
             currDoc.ActiveWindow.Selection.WholeStory();
@@ -422,9 +424,11 @@ namespace ListApp
 
         private void FixSpacing(RichTextBox rtb, String target, String subTarget)
         {
-            if (target == "")
+            int newLineStart = rtb.SelectionStart, newLineStartIndex = 0, newLineIndex;
+            while((newLineIndex = rtb.Text.IndexOf("\n", newLineStartIndex)) != -1)
             {
-                return;
+                //System.Diagnostics.Debug.WriteLine("new line" + rtb.Text.IndexOf("\n", newLineStartIndex).ToString());
+                newLineStartIndex = newLineIndex + "\n".Length;
             }
 
             //Replace > except first with \n> but change to * to avoid infinite loop. Then change * back to >
@@ -437,9 +441,10 @@ namespace ListApp
                     headerStartIndex = headerIndex + target.Length;
                     continue;
                 }
+
                 rtb.SelectionStart = headerIndex;
                 rtb.SelectionLength = 1;
-                rtb.SelectedText = "\n*";
+                rtb.SelectedText = "*";
                 headerStartIndex = headerIndex + target.Length;
 
             }
@@ -496,9 +501,9 @@ namespace ListApp
                 extraSpaceStartIndex = extraSpaceIndex + target.Length;
             }
 
-            int endOfLineIndex = rtb.Text.Length - 2;
+            int endOfLineIndex = rtb.Text.Length - 1;
             rtb.SelectionStart = endOfLineIndex;
-            rtb.SelectionLength = 2;
+            rtb.SelectionLength = 1;
             rtb.SelectedText = "";
         }
 
