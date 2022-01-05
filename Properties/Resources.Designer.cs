@@ -63,6 +63,16 @@ namespace ListApp.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap bold {
+            get {
+                object obj = ResourceManager.GetObject("bold", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap close_off {
             get {
                 object obj = ResourceManager.GetObject("close_off", resourceCulture);
@@ -166,6 +176,26 @@ namespace ListApp.Properties {
         internal static System.Drawing.Bitmap power_on {
             get {
                 object obj = ResourceManager.GetObject("power_on", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap warning_off {
+            get {
+                object obj = ResourceManager.GetObject("warning_off", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap warning_on {
+            get {
+                object obj = ResourceManager.GetObject("warning_on", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
