@@ -39,7 +39,6 @@ namespace ListApp
         private bool shutdown = false;
         private bool systemShutdown = false;
         private bool saving = false;
-        private bool saveByWord = false;
 
         public Form1()
         {
@@ -232,9 +231,11 @@ namespace ListApp
                 setupTimer.AutoReset = false;
 
                 //if not exiting
-                if(saving)
+                if (saving)
                 {
+                    Console.WriteLine("saving");
                     saving = false;
+                    exit = false;
                     this.Invoke(new MethodInvoker(delegate
                     {
                         browser.Dispose();
@@ -287,29 +288,62 @@ namespace ListApp
                     Word.Document currDoc = wordApp.ActiveDocument;
 
                     //To-do: Highlight?
-                    for (int i = 1; i < currDoc.Characters.Count; i++)
+                    bool saveByWord = bool.Parse(ConfigurationManager.AppSettings["SaveByWord"]);
+                    int threadSleep = Int32.Parse(ConfigurationManager.AppSettings["Sleep"]);
+
+                    if (saveByWord)
                     {
-                        Word.Range currCharRange = currDoc.Characters[i];
-                        string currCharStr = currCharRange.Text;
-                        char currChar = currCharStr.ToCharArray()[0];
-                        int currNumRep = currChar - '0';
-                        int threadSleep = Int32.Parse(ConfigurationManager.AppSettings["Sleep"]);
-                        System.Diagnostics.Debug.WriteLine(i + " " + currCharStr + " " + currChar + " " + currNumRep);
-
-                        if (currNumRep == -35)
+                        for (int i = 1; i < currDoc.Words.Count; i++)
                         {
-                            //if (i == currDoc.Characters.Count - 1 || i == currDoc.Characters.Count - 2) continue;
+                            Word.Range currWordRange = currDoc.Words[i];
+                            string currWordString = currWordRange.Text;
+                            Console.WriteLine("." + currWordString + ".");
+                            if (currWordString.Equals(String.Empty) || currWordString.Length == 1)
+                            {
+                                char currChar = currWordString.ToCharArray()[0];
+                                int currNumRep = currChar - '0';
+                                Console.WriteLine(currNumRep);
+                                if(currNumRep == -35)
+                                {
+                                    System.Threading.Thread.Sleep(threadSleep);
+                                    SendKeys.Send("{ENTER}");
+                                    System.Threading.Thread.Sleep(threadSleep);
+                                    continue;
+                                }
+                            }
                             System.Threading.Thread.Sleep(threadSleep);
-                            SendKeys.Send("{ENTER}");
+                            currWordRange.Copy();
                             System.Threading.Thread.Sleep(threadSleep);
-                            continue;
+                            browser.GetFocusedFrame().Paste();
+                            System.Threading.Thread.Sleep(threadSleep);
                         }
+                    } 
+                    else
+                    {
+                        for (int i = 1; i < currDoc.Characters.Count; i++)
+                        {
+                            Word.Range currCharRange = currDoc.Characters[i];
+                            string currCharStr = currCharRange.Text;
+                            char currChar = currCharStr.ToCharArray()[0];
+                            int currNumRep = currChar - '0';
 
-                        System.Threading.Thread.Sleep(threadSleep);
-                        currCharRange.Copy();
-                        System.Threading.Thread.Sleep(threadSleep);
-                        browser.GetFocusedFrame().Paste();
-                        System.Threading.Thread.Sleep(threadSleep);
+                            System.Diagnostics.Debug.WriteLine(i + " " + currCharStr + " " + currChar + " " + currNumRep);
+
+                            if (currNumRep == -35)
+                            {
+                                //if (i == currDoc.Characters.Count - 1 || i == currDoc.Characters.Count - 2) continue;
+                                System.Threading.Thread.Sleep(threadSleep);
+                                SendKeys.Send("{ENTER}");
+                                System.Threading.Thread.Sleep(threadSleep);
+                                continue;
+                            }
+
+                            System.Threading.Thread.Sleep(threadSleep);
+                            currCharRange.Copy();
+                            System.Threading.Thread.Sleep(threadSleep);
+                            browser.GetFocusedFrame().Paste();
+                            System.Threading.Thread.Sleep(threadSleep);
+                        }
                     }
                 }));
 
@@ -387,15 +421,10 @@ namespace ListApp
 
             wordApp.Selection.PasteAndFormat(Word.WdRecoveryType.wdFormatPlainText);
             currDoc.Range().ParagraphFormat.LineSpacingRule = Word.WdLineSpacing.wdLineSpaceSingle;
-
-            //Hide scroll bar
-            //object noSpacingStyle = "No Spacing";
-            //currDoc.Range().set_Style(noSpacingStyle);
             currDoc.Range().ParagraphFormat.SpaceBefore = 0.0f;
             currDoc.Range().ParagraphFormat.SpaceAfter = 0.0f;
             currDoc.Range().Font.Name = "Calibri";
             currDoc.Range().Font.Size = 12;
-
             currDoc.ActiveWindow.Selection.WholeStory();
             currDoc.ActiveWindow.Selection.Copy();
             System.Diagnostics.Debug.WriteLine("currdoc copy");
@@ -429,7 +458,11 @@ namespace ListApp
             {
                 richTextBox1.Invoke(new MethodInvoker(delegate
                 {
-                    FixSpacing(richTextBox1, ">", "•");
+                    //FixSpacing(richTextBox1, ">", "•");
+                    int endOfLineIndex = richTextBox1.Text.Length - 1;
+                    richTextBox1.SelectionStart = endOfLineIndex;
+                    richTextBox1.SelectionLength = 1;
+                    richTextBox1.SelectedText = "";
                 }));
             }
             else
@@ -440,13 +473,6 @@ namespace ListApp
 
         private void FixSpacing(RichTextBox rtb, String target, String subTarget)
         {
-            int newLineStart = rtb.SelectionStart, newLineStartIndex = 0, newLineIndex;
-            while((newLineIndex = rtb.Text.IndexOf("\n", newLineStartIndex)) != -1)
-            {
-                //System.Diagnostics.Debug.WriteLine("new line" + rtb.Text.IndexOf("\n", newLineStartIndex).ToString());
-                newLineStartIndex = newLineIndex + "\n".Length;
-            }
-
             //Replace > except first with \n> but change to * to avoid infinite loop. Then change * back to >
             int headerStart = rtb.SelectionStart, headerStartIndex = 0, headerIndex;
             while ((headerIndex = rtb.Text.IndexOf(target, headerStartIndex)) != -1)
@@ -479,7 +505,7 @@ namespace ListApp
 
             }
 
-            //Replace all • with tab + •
+            //Replace all • with space + • (ios notes adds additional space)
             int subHeaderStart = rtb.SelectionStart, subHeaderStartIndex = 0, subHeaderIndex;
             while ((subHeaderIndex = rtb.Text.IndexOf(subTarget, subHeaderStartIndex)) != -1)
             {
@@ -522,7 +548,6 @@ namespace ListApp
             rtb.SelectionLength = 1;
             rtb.SelectedText = "";
         }
-
         #endregion
 
         #region Gui 
@@ -546,8 +571,8 @@ namespace ListApp
             ideaMenuItem.Click += new EventHandler(OnIdea);
             ideaMenuItem.OwnerDraw = true;
             ideaMenuItem.DrawItem += new DrawItemEventHandler(DrawIdeaMenuItem);
-            ideaMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureIdeaMenuItem); 
-            
+            ideaMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureIdeaMenuItem);
+
             saveMenuItem = new MenuItem();
             saveMenuItem.Text = "  Save";
             saveMenuItem.Click += new EventHandler(OnSave);
@@ -563,7 +588,7 @@ namespace ListApp
             exitNoSaveMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureExitNoSaveMenuItem);
 
             exitMenuItem = new MenuItem();
-            exitMenuItem.Text = "  Exit"; 
+            exitMenuItem.Text = "  Exit";
             exitMenuItem.Click += new EventHandler(OnExit);
             exitMenuItem.OwnerDraw = true;
             exitMenuItem.DrawItem += new DrawItemEventHandler(DrawExitMenuItem);
@@ -578,7 +603,7 @@ namespace ListApp
 
             trayMenu.MenuItems.AddRange(new MenuItem[]
             {
-                ideaMenuItem, exitNoSaveMenuItem, saveMenuItem,  exitMenuItem, shutdownMenuItem 
+                ideaMenuItem, exitNoSaveMenuItem, saveMenuItem,  exitMenuItem, shutdownMenuItem
             });
 
             #endregion
@@ -623,8 +648,6 @@ namespace ListApp
 
         private void OnShutdown(object sender, EventArgs e)
         {
-            richTextBox1.SelectionStart = richTextBox1.Text.Length;
-
             if (this.WindowState != FormWindowState.Minimized)
             {
                 Settings.Default.WinLoc = this.Location;
@@ -640,6 +663,7 @@ namespace ListApp
         private void Save()
         {
             richTextBox1.Focus();
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
             richTextBox1.SelectAll();
             richTextBox1.Copy();
 
@@ -665,8 +689,6 @@ namespace ListApp
 
         private void OnExit(object sender, EventArgs e)
         {
-            richTextBox1.SelectionStart = richTextBox1.Text.Length;
-
             if (this.WindowState != FormWindowState.Minimized)
             {
                 Settings.Default.WinLoc = this.Location;
@@ -689,11 +711,7 @@ namespace ListApp
 
         private void OnIdea(object sender, EventArgs e)
         {
-            MessageBox.Show("IDEA");
-            //saveByWord = true; 
-            //saving = true;
-            //Save();
-            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+            MessageBox.Show("idea");
         }
 
         #endregion
@@ -722,7 +740,7 @@ namespace ListApp
             // Add image height and width  to the text height and width when 
             // drawn with selected font (got that from measurestring method)
             // to compute the total height and width needed for the rectangle
-            e.ItemWidth = (int)Math.Ceiling(sizeFloat.Width) + bitmapImage.Width; 
+            e.ItemWidth = (int)Math.Ceiling(sizeFloat.Width) + bitmapImage.Width;
             e.ItemHeight = bitmapImage.Height; //(int)Math.Ceiling(sizeFloat.Height)
         }
 
