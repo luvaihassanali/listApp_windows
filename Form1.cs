@@ -8,6 +8,7 @@ using System.Timers;
 using System.IO;
 using Word = Microsoft.Office.Interop.Word;
 using System.Configuration;
+using System.Collections.Generic;
 
 namespace ListApp
 {
@@ -301,7 +302,7 @@ namespace ListApp
                                 char currChar = currWordString.ToCharArray()[0];
                                 int currNumRep = currChar - '0';
                                 System.Diagnostics.Debug.WriteLine(currNumRep);
-                                if(currNumRep == -35)
+                                if (currNumRep == -35)
                                 {
                                     System.Threading.Thread.Sleep(threadSleep);
                                     SendKeys.Send("{ENTER}");
@@ -315,7 +316,7 @@ namespace ListApp
                             browser.GetFocusedFrame().Paste();
                             System.Threading.Thread.Sleep(threadSleep);
                         }
-                    } 
+                    }
                     else
                     {
                         for (int i = 1; i < currDoc.Characters.Count; i++)
@@ -417,7 +418,7 @@ namespace ListApp
 
             Word.Document currDoc = wordApp.Documents.Add();
 
-            wordApp.Selection.PasteAndFormat(Word.WdRecoveryType.wdFormatPlainText);
+            wordApp.Selection.Paste(); // AndFormat(Word.WdRecoveryType.wdFormatPlainText);
             currDoc.Range().ParagraphFormat.LineSpacingRule = Word.WdLineSpacing.wdLineSpaceSingle;
             currDoc.Range().ParagraphFormat.SpaceBefore = 0.0f;
             currDoc.Range().ParagraphFormat.SpaceAfter = 0.0f;
@@ -434,7 +435,6 @@ namespace ListApp
                     richTextBox1.Focus();
                     richTextBox1.SelectAll();
                     richTextBox1.Paste();
-
                 }));
 
                 System.Diagnostics.Debug.WriteLine("Word quit import");
@@ -456,11 +456,7 @@ namespace ListApp
             {
                 richTextBox1.Invoke(new MethodInvoker(delegate
                 {
-                    //FixSpacing(richTextBox1, ">", "•");
-                    int endOfLineIndex = richTextBox1.Text.Length - 1;
-                    richTextBox1.SelectionStart = endOfLineIndex;
-                    richTextBox1.SelectionLength = 1;
-                    richTextBox1.SelectedText = "";
+                    FixSpacing();
                 }));
             }
             else
@@ -469,82 +465,65 @@ namespace ListApp
             }
         }
 
-        private void FixSpacing(RichTextBox rtb, String target, String subTarget)
+        private void FixSpacing()
         {
-            //Replace > except first with \n> but change to * to avoid infinite loop. Then change * back to >
-            int headerStart = rtb.SelectionStart, headerStartIndex = 0, headerIndex;
-            while ((headerIndex = rtb.Text.IndexOf(target, headerStartIndex)) != -1)
+            int newLineStart = richTextBox1.SelectionStart;
+            int newLineStartIndex = 0;
+            int newLineIndex;
+            while ((newLineIndex = richTextBox1.Text.IndexOf(".", newLineStartIndex)) != -1)
             {
-                if (foundFirstHeaderSymbol)
+                richTextBox1.SelectionStart = newLineIndex;
+                richTextBox1.SelectionLength = 1;
+                richTextBox1.SelectedText = ".\n";
+                newLineStartIndex = newLineIndex + ".".Length;
+            }
+
+            int bulletStart = richTextBox1.SelectionStart;
+            int bulletStartIndex = 0;
+            int bulletIndex;
+            while ((bulletIndex = richTextBox1.Text.IndexOf("•", bulletStartIndex)) != -1)
+            {
+                richTextBox1.SelectionStart = bulletIndex;
+                richTextBox1.SelectionLength = 1;
+                richTextBox1.SelectedText = "*";
+                bulletStartIndex = bulletIndex + "•".Length;
+            }
+
+            bulletStart = richTextBox1.SelectionStart;
+            bulletStartIndex = 0;
+            bulletIndex = 0;
+            while ((bulletIndex = richTextBox1.Text.IndexOf("*", bulletStartIndex)) != -1)
+            {
+                richTextBox1.SelectionStart = bulletIndex;
+                richTextBox1.SelectionLength = 1;
+                richTextBox1.SelectedText = "•";
+                bulletStartIndex = bulletIndex + "*".Length;
+
+            }
+
+            int extraSpaceStart = richTextBox1.SelectionStart, extraSpaceStartIndex = 0, extraSpaceIndex;
+            while ((extraSpaceIndex = richTextBox1.Text.IndexOf(" \n", extraSpaceStartIndex)) != -1)
+            {
+                richTextBox1.SelectionStart = extraSpaceIndex;
+                richTextBox1.SelectionLength = 2;
+                if (extraSpaceIndex == richTextBox1.Text.IndexOf(" \n\n"))
                 {
-                    foundFirstHeaderSymbol = false;
-                    headerStartIndex = headerIndex + target.Length;
-                    continue;
-                }
-
-                rtb.SelectionStart = headerIndex;
-                rtb.SelectionLength = 1;
-                rtb.SelectedText = "*";
-                headerStartIndex = headerIndex + target.Length;
-
-            }
-
-            //change * to >
-            target = "*";
-            headerStart = rtb.SelectionStart;
-            headerStartIndex = 0;
-            headerIndex = 0;
-            while ((headerIndex = rtb.Text.IndexOf(target, headerStartIndex)) != -1)
-            {
-                rtb.SelectionStart = headerIndex;
-                rtb.SelectionLength = 1;
-                rtb.SelectedText = ">";
-                headerStartIndex = headerIndex + target.Length;
-
-            }
-
-            //Replace all • with space + • (ios notes adds additional space)
-            int subHeaderStart = rtb.SelectionStart, subHeaderStartIndex = 0, subHeaderIndex;
-            while ((subHeaderIndex = rtb.Text.IndexOf(subTarget, subHeaderStartIndex)) != -1)
-            {
-                rtb.SelectionStart = subHeaderIndex;
-                rtb.SelectionLength = 1;
-                rtb.SelectedText = " *";
-                subHeaderStartIndex = subHeaderIndex + subTarget.Length;
-            }
-
-            target = "*";
-            headerStart = rtb.SelectionStart;
-            headerStartIndex = 0;
-            headerIndex = 0;
-            while ((headerIndex = rtb.Text.IndexOf(target, headerStartIndex)) != -1)
-            {
-                rtb.SelectionStart = headerIndex;
-                rtb.SelectionLength = 1;
-                rtb.SelectedText = subTarget;
-                headerStartIndex = headerIndex + target.Length;
-            }
-
-            int extraSpaceStart = rtb.SelectionStart, extraSpaceStartIndex = 0, extraSpaceIndex;
-            while ((extraSpaceIndex = rtb.Text.IndexOf(" \n", extraSpaceStartIndex)) != -1)
-            {
-                rtb.SelectionStart = extraSpaceIndex;
-                rtb.SelectionLength = 3;
-                if (extraSpaceIndex == rtb.Text.IndexOf(" \n\n"))
-                {
-                    rtb.SelectedText = "\n\n";
+                    richTextBox1.SelectedText = "\n\n";
                 }
                 else
                 {
-                    rtb.SelectedText = "\n";
+                    richTextBox1.SelectedText = "\n";
                 }
-                extraSpaceStartIndex = extraSpaceIndex + target.Length;
+                extraSpaceStartIndex = extraSpaceIndex + "\n".Length;
             }
 
-            int endOfLineIndex = rtb.Text.Length - 1;
-            rtb.SelectionStart = endOfLineIndex;
-            rtb.SelectionLength = 1;
-            rtb.SelectedText = "";
+            int endOfLineIndex = richTextBox1.Text.Length - 2;
+            richTextBox1.SelectionStart = endOfLineIndex;
+            richTextBox1.SelectionLength = 1;
+            richTextBox1.SelectedText = "";
+
+            richTextBox1.Text.Trim();
+
         }
         #endregion
 
