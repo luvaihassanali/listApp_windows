@@ -211,9 +211,7 @@ namespace ListApp
 
         private void TimerElapsed(object sender, ElapsedEventArgs e)
         {
-            //browser.ShowDevTools();
             IBrowser iBrowser = browser.GetBrowser();
-            //List<string> frameNames = iBrowser.GetFrameNames();
 
             if (exit)
             {
@@ -233,7 +231,7 @@ namespace ListApp
                 //if not exiting
                 if (saving)
                 {
-                    Console.WriteLine("saving");
+                    System.Diagnostics.Debug.WriteLine("saving");
                     saving = false;
                     exit = false;
                     this.Invoke(new MethodInvoker(delegate
@@ -297,12 +295,12 @@ namespace ListApp
                         {
                             Word.Range currWordRange = currDoc.Words[i];
                             string currWordString = currWordRange.Text;
-                            Console.WriteLine("." + currWordString + ".");
+                            System.Diagnostics.Debug.WriteLine("." + currWordString + ".");
                             if (currWordString.Equals(String.Empty) || currWordString.Length == 1)
                             {
                                 char currChar = currWordString.ToCharArray()[0];
                                 int currNumRep = currChar - '0';
-                                Console.WriteLine(currNumRep);
+                                System.Diagnostics.Debug.WriteLine(currNumRep);
                                 if(currNumRep == -35)
                                 {
                                     System.Threading.Thread.Sleep(threadSleep);
