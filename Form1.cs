@@ -519,10 +519,10 @@ namespace ListApp
 
             int endOfLineIndex = richTextBox1.Text.Length - 2;
             richTextBox1.SelectionStart = endOfLineIndex;
-            richTextBox1.SelectionLength = 1;
+            richTextBox1.SelectionLength = 2;
             richTextBox1.SelectedText = "";
 
-            richTextBox1.Text.Trim();
+           // richTextBox1.Text = richTextBox1.Text.TrimEnd();
 
         }
         #endregion
