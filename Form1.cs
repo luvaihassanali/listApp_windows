@@ -8,7 +8,6 @@ using System.Timers;
 using System.IO;
 using Word = Microsoft.Office.Interop.Word;
 using System.Configuration;
-using System.Collections.Generic;
 
 namespace ListApp
 {
@@ -33,13 +32,12 @@ namespace ListApp
         private System.Timers.Timer setupTimer;
 
         private bool onNotesPage = false;
-        private bool foundFirstHeaderSymbol = true;
         private bool importing = true;
         private bool exporting = false;
         private bool exit = false;
+        private bool saving = false;
         private bool shutdown = false;
         private bool systemShutdown = false;
-        private bool saving = false;
 
         public Form1()
         {
@@ -745,6 +743,7 @@ namespace ListApp
                 {
                     // Text color when selected (highlighted)
                     menuBrush = new SolidBrush(SystemColors.MenuText);
+                    menuFont = new Font("Calibri", 12F, FontStyle.Bold);
                 }
                 else
                 {
@@ -782,6 +781,7 @@ namespace ListApp
                 // Selected color
                 e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
                 bitmapImage = Properties.Resources.power_on;
+               
             }
             else
             {
@@ -878,6 +878,7 @@ namespace ListApp
             {
                 e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
                 bitmapImage = Properties.Resources.idea_on;
+                menuFont = new Font("Calibri", 12F, FontStyle.Bold);
             }
             else
             {
@@ -963,6 +964,7 @@ namespace ListApp
             {
                 e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
                 bitmapImage = Properties.Resources.cloud_on;
+                menuFont = new Font("Calibri", 12F, FontStyle.Bold);
             }
             else
             {
@@ -1048,6 +1050,7 @@ namespace ListApp
             {
                 e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
                 bitmapImage = Properties.Resources.warning_on;
+                menuFont = new Font("Calibri", 12F, FontStyle.Bold);
             }
             else
             {
@@ -1133,6 +1136,7 @@ namespace ListApp
             {
                 e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
                 bitmapImage = Properties.Resources.close_on;
+                menuFont = new Font("Calibri", 12F, FontStyle.Bold);
             }
             else
             {
