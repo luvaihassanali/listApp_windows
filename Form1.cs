@@ -21,15 +21,12 @@ namespace ListApp
 
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
-        private MenuItem ideaMenuItem;
-        private MenuItem saveMenuItem;
-        private MenuItem exitNoSaveMenuItem;
-        private MenuItem exitMenuItem;
-        private MenuItem shutdownMenuItem;
         private ContextMenuStrip contextMenu;
         private ChromiumWebBrowser browser;
         private Word.Application wordApp;
         private System.Timers.Timer setupTimer;
+        private Font contextFont = new Font("Segoe UI", 11F, FontStyle.Regular);
+        private Font contextHoverFont = new Font("Segoe UI", 11F, FontStyle.Bold);
 
         private bool onNotesPage = false;
         private bool importing = true;
@@ -413,7 +410,7 @@ namespace ListApp
         {
             wordApp = new Word.Application();
             wordApp.Visible = false;
-
+            wordApp.DisplayAlerts = Word.WdAlertLevel.wdAlertsNone;
             Word.Document currDoc = wordApp.Documents.Add();
 
             wordApp.Selection.Paste(); // AndFormat(Word.WdRecoveryType.wdFormatPlainText);
@@ -541,35 +538,35 @@ namespace ListApp
 
             #region Tray menu items
 
-            ideaMenuItem = new MenuItem();
+            MenuItem ideaMenuItem = new MenuItem();
             ideaMenuItem.Text = "  Idea";
             ideaMenuItem.Click += new EventHandler(OnIdea);
             ideaMenuItem.OwnerDraw = true;
             ideaMenuItem.DrawItem += new DrawItemEventHandler(DrawIdeaMenuItem);
             ideaMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureIdeaMenuItem);
 
-            saveMenuItem = new MenuItem();
+            MenuItem saveMenuItem = new MenuItem();
             saveMenuItem.Text = "  Save";
             saveMenuItem.Click += new EventHandler(OnSave);
             saveMenuItem.OwnerDraw = true;
             saveMenuItem.DrawItem += new DrawItemEventHandler(DrawSaveMenuItem);
             saveMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureSaveMenuItem);
 
-            exitNoSaveMenuItem = new MenuItem();
+            MenuItem exitNoSaveMenuItem = new MenuItem();
             exitNoSaveMenuItem.Text = "  Kill";
             exitNoSaveMenuItem.Click += new EventHandler(OnExitNoSave);
             exitNoSaveMenuItem.OwnerDraw = true;
             exitNoSaveMenuItem.DrawItem += new DrawItemEventHandler(DrawExitNoSaveMenuItem);
             exitNoSaveMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureExitNoSaveMenuItem);
 
-            exitMenuItem = new MenuItem();
+            MenuItem exitMenuItem = new MenuItem();
             exitMenuItem.Text = "  Exit";
             exitMenuItem.Click += new EventHandler(OnExit);
             exitMenuItem.OwnerDraw = true;
             exitMenuItem.DrawItem += new DrawItemEventHandler(DrawExitMenuItem);
             exitMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureExitMenuItem);
 
-            shutdownMenuItem = new MenuItem();
+            MenuItem shutdownMenuItem = new MenuItem();
             shutdownMenuItem.Text = "  Shutdown";
             shutdownMenuItem.Click += new EventHandler(OnShutdown);
             shutdownMenuItem.OwnerDraw = true;
@@ -704,7 +701,7 @@ namespace ListApp
             // Get standard menu font so that the text in this
             // menu rectangle doesn't look funny with a
             // different font
-            Font menuFont = richTextBox1.Font;
+            Font menuFont = contextFont;
 
             StringFormat stringFormat = new StringFormat();
             SizeF sizeFloat = e.Graphics.MeasureString(shutdownMenuItem.Text, menuFont, 1000, stringFormat);
@@ -726,7 +723,7 @@ namespace ListApp
             // Get standard menu font so that the text in this
             // menu rectangle doesn't look funny with a
             // different font
-            Font menuFont = richTextBox1.Font;
+            Font menuFont = contextFont;
 
             // Get a brush to use for painting
             SolidBrush menuBrush = null;
@@ -743,7 +740,7 @@ namespace ListApp
                 {
                     // Text color when selected (highlighted)
                     menuBrush = new SolidBrush(SystemColors.MenuText);
-                    menuFont = new Font("Calibri", 12F, FontStyle.Bold);
+                    menuFont = contextHoverFont;
                 }
                 else
                 {
@@ -815,7 +812,7 @@ namespace ListApp
         private void MeasureIdeaMenuItem(object sender, MeasureItemEventArgs e)
         {
             MenuItem ideaMenuItem = (MenuItem)sender;
-            Font menuFont = richTextBox1.Font;
+            Font menuFont = contextFont;
             StringFormat stringFormat = new StringFormat();
             SizeF sizeFloat = e.Graphics.MeasureString(ideaMenuItem.Text, menuFont, 1000, stringFormat);
 
@@ -831,7 +828,7 @@ namespace ListApp
             MenuItem ideaMenuItem = (MenuItem)sender;
 
             // Default menu font
-            Font menuFont = richTextBox1.Font;
+            Font menuFont = contextFont;
             SolidBrush menuBrush = null;
 
             // Determine menu brush for painting
@@ -878,7 +875,7 @@ namespace ListApp
             {
                 e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
                 bitmapImage = Properties.Resources.idea_on;
-                menuFont = new Font("Calibri", 12F, FontStyle.Bold);
+                menuFont = contextHoverFont;
             }
             else
             {
@@ -901,7 +898,7 @@ namespace ListApp
         private void MeasureSaveMenuItem(object sender, MeasureItemEventArgs e)
         {
             MenuItem saveMenuItem = (MenuItem)sender;
-            Font menuFont = richTextBox1.Font;
+            Font menuFont = contextFont;
             StringFormat stringFormat = new StringFormat();
             SizeF sizeFloat = e.Graphics.MeasureString(saveMenuItem.Text, menuFont, 1000, stringFormat);
 
@@ -917,7 +914,7 @@ namespace ListApp
             MenuItem saveMenuItem = (MenuItem)sender;
 
             // Default menu font
-            Font menuFont = richTextBox1.Font;
+            Font menuFont = contextFont;
             SolidBrush menuBrush = null;
 
             // Determine menu brush for painting
@@ -964,7 +961,7 @@ namespace ListApp
             {
                 e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
                 bitmapImage = Properties.Resources.cloud_on;
-                menuFont = new Font("Calibri", 12F, FontStyle.Bold);
+                menuFont = contextHoverFont;
             }
             else
             {
@@ -987,7 +984,7 @@ namespace ListApp
         private void MeasureExitNoSaveMenuItem(object sender, MeasureItemEventArgs e)
         {
             MenuItem exitMenuItem = (MenuItem)sender;
-            Font menuFont = richTextBox1.Font;
+            Font menuFont = contextFont;
             StringFormat stringFormat = new StringFormat();
             SizeF sizeFloat = e.Graphics.MeasureString(exitMenuItem.Text, menuFont, 1000, stringFormat);
 
@@ -1003,7 +1000,7 @@ namespace ListApp
             MenuItem exitMenuItem = (MenuItem)sender;
 
             // Default menu font
-            Font menuFont = richTextBox1.Font;
+            Font menuFont = contextFont;
             SolidBrush menuBrush = null;
 
             // Determine menu brush for painting
@@ -1050,7 +1047,7 @@ namespace ListApp
             {
                 e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
                 bitmapImage = Properties.Resources.warning_on;
-                menuFont = new Font("Calibri", 12F, FontStyle.Bold);
+                menuFont = contextHoverFont;
             }
             else
             {
@@ -1073,7 +1070,7 @@ namespace ListApp
         private void MeasureExitMenuItem(object sender, MeasureItemEventArgs e)
         {
             MenuItem exitMenuItem = (MenuItem)sender;
-            Font menuFont = richTextBox1.Font;
+            Font menuFont = contextFont;
             StringFormat stringFormat = new StringFormat();
             SizeF sizeFloat = e.Graphics.MeasureString(exitMenuItem.Text, menuFont, 1000, stringFormat);
 
@@ -1089,7 +1086,7 @@ namespace ListApp
             MenuItem exitMenuItem = (MenuItem)sender;
 
             // Default menu font
-            Font menuFont = richTextBox1.Font;
+            Font menuFont = contextFont;
             SolidBrush menuBrush = null;
 
             // Determine menu brush for painting
@@ -1136,7 +1133,7 @@ namespace ListApp
             {
                 e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
                 bitmapImage = Properties.Resources.close_on;
-                menuFont = new Font("Calibri", 12F, FontStyle.Bold);
+                menuFont = contextHoverFont;
             }
             else
             {
