@@ -25,6 +25,8 @@ namespace ListApp
         private ChromiumWebBrowser browser;
         private Word.Application wordApp;
         private System.Timers.Timer setupTimer;
+        private System.Windows.Forms.Timer singleClickTimer;
+
         private Font contextFont = new Font("Segoe UI", 11F, FontStyle.Regular);
         private Font contextHoverFont = new Font("Segoe UI", 11F, FontStyle.Bold);
 
@@ -65,10 +67,29 @@ namespace ListApp
 
         private void trayIcon_Click(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right)
+            if (e.Button == MouseButtons.Left)
+            {
+                singleClickTimer.Start();
+            }
+
+            if (e != null && e.Button == MouseButtons.Right)
             {
                 return;
             }
+        }
+
+        private void TrayIcon_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                singleClickTimer.Stop();
+                this.Activate();
+            }
+        }
+
+        private void SingleClickTimer_Tick(object sender, EventArgs e)
+        {
+            singleClickTimer.Stop();
             if (this.WindowState == FormWindowState.Normal)
             {
                 WindowState = FormWindowState.Minimized;
@@ -80,9 +101,7 @@ namespace ListApp
                 Visible = true;
                 ShowInTaskbar = false;
                 WindowState = FormWindowState.Normal;
-                //richTextBox1.Focus();
-                //richTextBox1.SelectionStart = richTextBox1.Text.Length;
-                Activate();
+                this.Activate();
             }
         }
 
@@ -526,6 +545,10 @@ namespace ListApp
 
         private void InitializeGui()
         {
+            singleClickTimer = new System.Windows.Forms.Timer();
+            //singleClickTimer.Interval = (int)(SystemInformation.DoubleClickTime / 2); // is 100 ms
+            singleClickTimer.Tick += SingleClickTimer_Tick;
+
             this.Location = Settings.Default.WinLoc;
             this.Size = Settings.Default.WinSize;
             this.Opacity = Settings.Default.Opacity;
@@ -534,9 +557,9 @@ namespace ListApp
             this.DoubleBuffered = true;
             this.SetStyle(ControlStyles.ResizeRedraw, true);
 
-            trayMenu = new ContextMenu();
+            #region Tray menu
 
-            #region Tray menu items
+            trayMenu = new ContextMenu();
 
             MenuItem ideaMenuItem = new MenuItem();
             ideaMenuItem.Text = "  Idea";
@@ -575,10 +598,9 @@ namespace ListApp
 
             trayMenu.MenuItems.AddRange(new MenuItem[]
             {
-                ideaMenuItem, exitNoSaveMenuItem, saveMenuItem,  exitMenuItem, shutdownMenuItem
+                exitNoSaveMenuItem, saveMenuItem, exitMenuItem, shutdownMenuItem
+                //exitNoSaveMenuItem, new MenuItem("-"), saveMenuItem,  new MenuItem("-"), exitMenuItem, new MenuItem("-"), shutdownMenuItem
             });
-
-            #endregion
 
             trayIcon = new NotifyIcon();
             trayIcon.Text = "Notepad";
@@ -586,11 +608,14 @@ namespace ListApp
             trayIcon.ContextMenu = trayMenu;
             trayIcon.Visible = true;
             trayIcon.MouseClick += new MouseEventHandler(trayIcon_Click);
+            trayIcon.MouseDoubleClick += new MouseEventHandler(TrayIcon_MouseDoubleClick);
+
+            #endregion
+
+            #region Context menu
 
             contextMenu = new ContextMenuStrip();
             contextMenu.BackColor = SystemColors.Menu; //Color.FromArgb(242, 242, 242);
-
-            #region Context menu items
 
             ToolStripMenuItem copyItem = new ToolStripMenuItem("Copy");
             copyItem.Image = Properties.Resources.copy;
