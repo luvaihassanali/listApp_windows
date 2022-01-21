@@ -68,14 +68,10 @@ namespace ListApp
         private void trayIcon_Click(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
-            {
                 singleClickTimer.Start();
-            }
 
             if (e != null && e.Button == MouseButtons.Right)
-            {
                 return;
-            }
         }
 
         private void TrayIcon_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -83,26 +79,29 @@ namespace ListApp
             if (e.Button == MouseButtons.Left)
             {
                 singleClickTimer.Stop();
-                this.Activate();
+                if (this.WindowState == FormWindowState.Normal)
+                {
+                    WindowState = FormWindowState.Minimized;
+                    Visible = false;
+                    ShowInTaskbar = false;
+                }
+                else
+                {
+                    Visible = true;
+                    ShowInTaskbar = false;
+                    WindowState = FormWindowState.Normal;
+                    this.Activate();
+                }
             }
         }
 
         private void SingleClickTimer_Tick(object sender, EventArgs e)
         {
             singleClickTimer.Stop();
-            if (this.WindowState == FormWindowState.Normal)
-            {
-                WindowState = FormWindowState.Minimized;
-                Visible = false;
-                ShowInTaskbar = false;
-            }
-            else
-            {
-                Visible = true;
-                ShowInTaskbar = false;
-                WindowState = FormWindowState.Normal;
-                this.Activate();
-            }
+            Visible = true;
+            ShowInTaskbar = false;
+            WindowState = FormWindowState.Normal;
+            this.Activate();
         }
 
         protected override void WndProc(ref Message m)
