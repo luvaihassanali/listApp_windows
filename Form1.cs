@@ -16,11 +16,15 @@ namespace ListApp
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;
         ContextMenuStrip contextMenu;
+        private Timer singleClickTimer;
 
         public Form1()
         {
             InitializeComponent();
-            
+
+            singleClickTimer = new Timer();
+            singleClickTimer.Tick += SingleClickTimer_Tick;
+
             trayMenu = new ContextMenu();
             trayMenu.MenuItems.Add("Info", OnInfo);
             trayMenu.MenuItems.Add("Exit", OnExit);
@@ -30,8 +34,9 @@ namespace ListApp
             trayIcon.ContextMenu = trayMenu;
             trayIcon.Visible = true;
             trayIcon.MouseClick += new MouseEventHandler(trayIcon_Click);
-            
-            if(!File.Exists("notes.rtf"))
+            trayIcon.MouseDoubleClick += new MouseEventHandler(TrayIcon_MouseDoubleClick);
+
+            if (!File.Exists("notes.rtf"))
             {
                 this.richTextBox1.SaveFile("notes.rtf", RichTextBoxStreamType.RichText);
             } 
@@ -67,24 +72,48 @@ namespace ListApp
 
         private void trayIcon_Click(object sender, MouseEventArgs e)
         {
-            if(e.Button == MouseButtons.Right)
+            if (e.Button == MouseButtons.Left)
+            {
+                singleClickTimer.Start();
+            }
+
+            if (e != null && e.Button == MouseButtons.Right)
             {
                 return;
             }
-            if (this.WindowState == FormWindowState.Normal)
+        }
+
+        private void SingleClickTimer_Tick(object sender, EventArgs e)
+        {
+            singleClickTimer.Stop();
+            Visible = true;
+            ShowInTaskbar = false;
+            WindowState = FormWindowState.Normal;
+            richTextBox1.Focus();
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+            Activate();
+        }
+
+        private void TrayIcon_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
             {
-                WindowState = FormWindowState.Minimized;
-                Visible = false;
-                ShowInTaskbar = false;
-            }
-            else
-            {
-                Visible = true;
-                ShowInTaskbar = false;
-                WindowState = FormWindowState.Normal;
-                richTextBox1.Focus();
-                richTextBox1.SelectionStart = richTextBox1.Text.Length;
-                Activate();
+                singleClickTimer.Stop();
+                if (this.WindowState == FormWindowState.Normal)
+                {
+                    WindowState = FormWindowState.Minimized;
+                    Visible = false;
+                    ShowInTaskbar = false;
+                }
+                else
+                {
+                    Visible = true;
+                    ShowInTaskbar = false;
+                    WindowState = FormWindowState.Normal;
+                    richTextBox1.Focus();
+                    richTextBox1.SelectionStart = richTextBox1.Text.Length;
+                    Activate();
+                }
             }
         }
 
@@ -228,12 +257,7 @@ namespace ListApp
 
         private void DoPaste(object sender, EventArgs e)
         {
-            DataFormats.Format myFormat = DataFormats.GetFormat(DataFormats.Text);
-
-            if (richTextBox1.CanPaste(myFormat))
-            {
-                richTextBox1.Paste(myFormat);
-            }
+            richTextBox1.Paste();
         }
 
         private void DoCut(object sender, EventArgs e)
