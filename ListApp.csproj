@@ -149,6 +149,8 @@
     <Content Include="notepad.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="Resources\power-on-b.png" />
+    <None Include="Resources\power-off-b.png" />
     <None Include="Resources\warning-on.png" />
     <None Include="Resources\warning-off.png" />
     <None Include="Resources\bold.png" />

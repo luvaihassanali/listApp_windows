@@ -27,9 +27,12 @@ namespace ListApp
         private System.Timers.Timer setupTimer;
         private System.Windows.Forms.Timer singleClickTimer;
 
-        private Font contextFont = new Font("Segoe UI", 11F, FontStyle.Regular);
-        private Font contextHoverFont = new Font("Segoe UI", 11F, FontStyle.Bold);
-
+        private Font contextFont = new Font("Segoe UI", 12F, FontStyle.Regular);
+        private Color contextFontColor = Color.White; //SystemColors.MenuText
+        private Font contextHoverFont = new Font("Segoe UI", 12F, FontStyle.Bold);
+        private Color contextColor = Color.FromArgb(31, 31, 31);
+        private Color contextHoverColor = Color.FromArgb(53, 53, 53); 
+        
         private bool onNotesPage = false;
         private bool importing = true;
         private bool exporting = false;
@@ -559,7 +562,7 @@ namespace ListApp
             #region Tray menu
 
             trayMenu = new ContextMenu();
-
+            
             MenuItem ideaMenuItem = new MenuItem();
             ideaMenuItem.Text = "  Idea";
             ideaMenuItem.Click += new EventHandler(OnIdea);
@@ -618,7 +621,6 @@ namespace ListApp
 
             ToolStripMenuItem copyItem = new ToolStripMenuItem("Copy");
             copyItem.Image = Properties.Resources.copy;
-            copyItem.Height = 50;
             copyItem.Click += DoCopy;
             contextMenu.Items.Add(copyItem);
 
@@ -731,12 +733,12 @@ namespace ListApp
             SizeF sizeFloat = e.Graphics.MeasureString(shutdownMenuItem.Text, menuFont, 1000, stringFormat);
 
             // Get image so size can be computed
-            Bitmap bitmapImage = Properties.Resources.power_off;
+            Bitmap bitmapImage = Properties.Resources.power_off_b;
 
             // Add image height and width  to the text height and width when 
             // drawn with selected font (got that from measurestring method)
             // to compute the total height and width needed for the rectangle
-            e.ItemWidth = (int)Math.Ceiling(sizeFloat.Width) + bitmapImage.Width;
+            e.ItemWidth = (int)(Math.Ceiling(sizeFloat.Width) + bitmapImage.Width * 1.5);
             e.ItemHeight = bitmapImage.Height; //(int)Math.Ceiling(sizeFloat.Height)
         }
 
@@ -763,13 +765,13 @@ namespace ListApp
                 if ((e.State & DrawItemState.Selected) != 0)
                 {
                     // Text color when selected (highlighted)
-                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                    menuBrush = new SolidBrush(Color.White);
                     menuFont = contextHoverFont;
                 }
                 else
                 {
                     // Text color during normal drawing
-                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                    menuBrush = new SolidBrush(Color.White);
                 }
             }
 
@@ -778,7 +780,7 @@ namespace ListApp
             //stringFormat.LineAlignment = System.Drawing.StringAlignment.Center;
 
             // Get image associated with this menu item
-            Bitmap bitmapImage = Properties.Resources.power_off;
+            Bitmap bitmapImage = Properties.Resources.power_off_b;
 
             // Rectangle for image portion
             Rectangle rectImage = e.Bounds;
@@ -800,14 +802,13 @@ namespace ListApp
             if ((e.State & DrawItemState.Selected) != 0)
             {
                 // Selected color
-                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
-                bitmapImage = Properties.Resources.power_on;
-               
+                bitmapImage = Properties.Resources.power_on_b;
+                e.Graphics.FillRectangle(new SolidBrush(contextHoverColor), e.Bounds);
             }
             else
             {
                 // Normal background color (when not selected)
-                e.Graphics.FillRectangle(SystemBrushes.Menu, e.Bounds);
+                e.Graphics.FillRectangle(new SolidBrush(contextColor), e.Bounds);
             }
 
             // Draw image portion
@@ -866,12 +867,12 @@ namespace ListApp
                 if ((e.State & DrawItemState.Selected) != 0)
                 {
                     // Text color when selected (highlighted)
-                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                    menuBrush = new SolidBrush(Color.White);
                 }
                 else
                 {
                     // Text color during normal drawing
-                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                    menuBrush = new SolidBrush(Color.White);
                 }
             }
 
@@ -897,13 +898,13 @@ namespace ListApp
             // [use this instead of e.DrawBackground() ]
             if ((e.State & DrawItemState.Selected) != 0)
             {
-                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
+                e.Graphics.FillRectangle(new SolidBrush(contextHoverColor), e.Bounds);
                 bitmapImage = Properties.Resources.idea_on;
                 menuFont = contextHoverFont;
             }
             else
             {
-                e.Graphics.FillRectangle(SystemBrushes.Menu, e.Bounds);
+                e.Graphics.FillRectangle(new SolidBrush(contextColor), e.Bounds);
             }
 
             e.Graphics.DrawImage(bitmapImage, rectImage);
@@ -952,12 +953,12 @@ namespace ListApp
                 if ((e.State & DrawItemState.Selected) != 0)
                 {
                     // Text color when selected (highlighted)
-                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                    menuBrush = new SolidBrush(Color.White);
                 }
                 else
                 {
                     // Text color during normal drawing
-                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                    menuBrush = new SolidBrush(Color.White);
                 }
             }
 
@@ -983,13 +984,13 @@ namespace ListApp
             // [use this instead of e.DrawBackground() ]
             if ((e.State & DrawItemState.Selected) != 0)
             {
-                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
+                e.Graphics.FillRectangle(new SolidBrush(contextHoverColor), e.Bounds);
                 bitmapImage = Properties.Resources.cloud_on;
                 menuFont = contextHoverFont;
             }
             else
             {
-                e.Graphics.FillRectangle(SystemBrushes.Menu, e.Bounds);
+                e.Graphics.FillRectangle(new SolidBrush(contextColor), e.Bounds);
             }
 
             e.Graphics.DrawImage(bitmapImage, rectImage);
@@ -1038,12 +1039,12 @@ namespace ListApp
                 if ((e.State & DrawItemState.Selected) != 0)
                 {
                     // Text color when selected (highlighted)
-                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                    menuBrush = new SolidBrush(Color.White);
                 }
                 else
                 {
                     // Text color during normal drawing
-                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                    menuBrush = new SolidBrush(Color.White);
                 }
             }
 
@@ -1069,13 +1070,13 @@ namespace ListApp
             // [use this instead of e.DrawBackground() ]
             if ((e.State & DrawItemState.Selected) != 0)
             {
-                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
+                e.Graphics.FillRectangle(new SolidBrush(contextHoverColor), e.Bounds);
                 bitmapImage = Properties.Resources.warning_on;
                 menuFont = contextHoverFont;
             }
             else
             {
-                e.Graphics.FillRectangle(SystemBrushes.Menu, e.Bounds);
+                e.Graphics.FillRectangle(new SolidBrush(contextColor), e.Bounds);
             }
 
             e.Graphics.DrawImage(bitmapImage, rectImage);
@@ -1124,12 +1125,12 @@ namespace ListApp
                 if ((e.State & DrawItemState.Selected) != 0)
                 {
                     // Text color when selected (highlighted)
-                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                    menuBrush = new SolidBrush(Color.White);
                 }
                 else
                 {
                     // Text color during normal drawing
-                    menuBrush = new SolidBrush(SystemColors.MenuText);
+                    menuBrush = new SolidBrush(Color.White);
                 }
             }
 
@@ -1155,13 +1156,13 @@ namespace ListApp
             // [use this instead of e.DrawBackground() ]
             if ((e.State & DrawItemState.Selected) != 0)
             {
-                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(222, 222, 222)), e.Bounds);
+                e.Graphics.FillRectangle(new SolidBrush(contextHoverColor), e.Bounds);
                 bitmapImage = Properties.Resources.close_on;
                 menuFont = contextHoverFont;
             }
             else
             {
-                e.Graphics.FillRectangle(SystemBrushes.Menu, e.Bounds);
+                e.Graphics.FillRectangle(new SolidBrush(contextColor), e.Bounds);
             }
 
             e.Graphics.DrawImage(bitmapImage, rectImage);
