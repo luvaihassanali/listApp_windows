@@ -738,7 +738,7 @@ namespace ListApp
             // Add image height and width  to the text height and width when 
             // drawn with selected font (got that from measurestring method)
             // to compute the total height and width needed for the rectangle
-            e.ItemWidth = (int)(Math.Ceiling(sizeFloat.Width) + bitmapImage.Width * 1.5);
+            e.ItemWidth = (int)(Math.Ceiling(sizeFloat.Width) + bitmapImage.Width * 1.15);
             e.ItemHeight = bitmapImage.Height; //(int)Math.Ceiling(sizeFloat.Height)
         }
 
