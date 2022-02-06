@@ -208,15 +208,14 @@ namespace ListApp
             }
             if (e.Frame.IsMain)
             {
-                //browser.SetZoomLevel(Settings.Default.Zoom);
+                browser.SetZoomLevel(-0.5);
                 if (e.Url.Contains("https://www.icloud.com/notes"))
                 {
                     setupTimer = new System.Timers.Timer();
-                    setupTimer.Interval = 2500; // In milliseconds
+                    setupTimer.Interval = 2500;
                     setupTimer.AutoReset = true;
                     setupTimer.Elapsed += new ElapsedEventHandler(TimerElapsed);
                     System.Diagnostics.Debug.WriteLine("FrameLoadEnd main");
-                    //setupTimer.Start();
 
                 }
             }
@@ -234,7 +233,7 @@ namespace ListApp
             {
                 #region exit app
 
-                //wait for final save
+                // Wait for final save
                 System.Threading.Thread.Sleep(8000);
 
                 System.Diagnostics.Debug.WriteLine("Word quit export");
@@ -245,7 +244,7 @@ namespace ListApp
                 setupTimer.Stop();
                 setupTimer.AutoReset = false;
 
-                //if not exiting
+                // Save only and do not exit
                 if (saving)
                 {
                     System.Diagnostics.Debug.WriteLine("saving");
@@ -292,17 +291,14 @@ namespace ListApp
                     this.Activate();
                     int left = this.DesktopLocation.X;
                     int top = this.DesktopLocation.Y;
-
                     Cursor.Position = new Point(left + 200, top + 200);
                     DoMouseClick();
 
                     SendKeys.SendWait("^a");
                     SendKeys.SendWait("{BACKSPACE}");
-
                     System.Threading.Thread.Sleep(1000);
-                    Word.Document currDoc = wordApp.ActiveDocument;
 
-                    //To-do: Highlight?
+                    Word.Document currDoc = wordApp.ActiveDocument;
                     bool saveByWord = bool.Parse(ConfigurationManager.AppSettings["SaveByWord"]);
                     int threadSleep = Int32.Parse(ConfigurationManager.AppSettings["Sleep"]);
 
@@ -346,7 +342,6 @@ namespace ListApp
 
                             if (currNumRep == -35)
                             {
-                                //if (i == currDoc.Characters.Count - 1 || i == currDoc.Characters.Count - 2) continue;
                                 System.Threading.Thread.Sleep(threadSleep);
                                 SendKeys.Send("{ENTER}");
                                 System.Threading.Thread.Sleep(threadSleep);
@@ -463,7 +458,6 @@ namespace ListApp
             {
                 richTextBox1.Visible = false;
                 this.Controls.Remove(richTextBox1);
-                //richTextBox1.Dispose();
                 importing = false;
                 InitializeBrowser();
             }
@@ -537,9 +531,6 @@ namespace ListApp
             richTextBox1.SelectionStart = endOfLineIndex;
             richTextBox1.SelectionLength = 2;
             richTextBox1.SelectedText = "";
-
-           // richTextBox1.Text = richTextBox1.Text.TrimEnd();
-
         }
         #endregion
 
