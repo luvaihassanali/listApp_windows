@@ -273,7 +273,7 @@ namespace ListApp
                 }
 
                 shutdown = true;
-                System.Environment.Exit(0);
+                Environment.Exit(0);
 
                 #endregion
             }
@@ -584,7 +584,7 @@ namespace ListApp
 
             MenuItem shutdownMenuItem = new MenuItem();
             shutdownMenuItem.Text = "  Shutdown";
-            shutdownMenuItem.Click += new EventHandler(OnShutdownNoSave);
+            shutdownMenuItem.Click += new EventHandler(OnShutdown);
             shutdownMenuItem.OwnerDraw = true;
             shutdownMenuItem.DrawItem += new DrawItemEventHandler(DrawShutdownMenuItem);
             shutdownMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureShutdownMenuItem);
@@ -592,7 +592,7 @@ namespace ListApp
 
             MenuItem shutdownNoSaveMenuItem = new MenuItem();
             shutdownNoSaveMenuItem.Text = "  Shutdown (no save)";
-            shutdownNoSaveMenuItem.Click += new EventHandler(OnShutdown);
+            shutdownNoSaveMenuItem.Click += new EventHandler(OnShutdownNoSave);
             shutdownNoSaveMenuItem.OwnerDraw = true;
             shutdownNoSaveMenuItem.DrawItem += new DrawItemEventHandler(DrawShutdownNoSaveMenuItem);
             shutdownNoSaveMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureShutdownNoSaveMenuItem);
@@ -659,7 +659,8 @@ namespace ListApp
 
         private void OnShutdownNoSave(object sender, EventArgs e)
         {
-            systemShutdown = true;
+            System.Diagnostics.Process.Start("shutdown", "/s /t 0");
+            System.Environment.Exit(0);
         }
 
         private void Save()
@@ -680,6 +681,7 @@ namespace ListApp
                 Settings.Default.WinSize = this.Size;
                 Settings.Default.Opacity = this.Opacity;
             }
+            Settings.Default.Save();
 
             trayIcon.Visible = false;
             trayIcon.Dispose();
