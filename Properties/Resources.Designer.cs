@@ -183,6 +183,16 @@ namespace ListApp.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap power_off_c {
+            get {
+                object obj = ResourceManager.GetObject("power_off_c", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap power_on {
             get {
                 object obj = ResourceManager.GetObject("power_on", resourceCulture);
@@ -196,6 +206,16 @@ namespace ListApp.Properties {
         internal static System.Drawing.Bitmap power_on_b {
             get {
                 object obj = ResourceManager.GetObject("power_on_b", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap power_on_c {
+            get {
+                object obj = ResourceManager.GetObject("power_on_c", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

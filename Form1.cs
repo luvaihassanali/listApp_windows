@@ -584,14 +584,22 @@ namespace ListApp
 
             MenuItem shutdownMenuItem = new MenuItem();
             shutdownMenuItem.Text = "  Shutdown";
-            shutdownMenuItem.Click += new EventHandler(OnShutdown);
+            shutdownMenuItem.Click += new EventHandler(OnShutdownNoSave);
             shutdownMenuItem.OwnerDraw = true;
             shutdownMenuItem.DrawItem += new DrawItemEventHandler(DrawShutdownMenuItem);
             shutdownMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureShutdownMenuItem);
 
+
+            MenuItem shutdownNoSaveMenuItem = new MenuItem();
+            shutdownNoSaveMenuItem.Text = "  Shutdown (no save)";
+            shutdownNoSaveMenuItem.Click += new EventHandler(OnShutdown);
+            shutdownNoSaveMenuItem.OwnerDraw = true;
+            shutdownNoSaveMenuItem.DrawItem += new DrawItemEventHandler(DrawShutdownNoSaveMenuItem);
+            shutdownNoSaveMenuItem.MeasureItem += new MeasureItemEventHandler(MeasureShutdownNoSaveMenuItem);
+
             trayMenu.MenuItems.AddRange(new MenuItem[]
             {
-                exitNoSaveMenuItem, saveMenuItem, exitMenuItem, shutdownMenuItem
+                exitNoSaveMenuItem, saveMenuItem, exitMenuItem, shutdownNoSaveMenuItem, shutdownMenuItem
                 //exitNoSaveMenuItem, new MenuItem("-"), saveMenuItem,  new MenuItem("-"), exitMenuItem, new MenuItem("-"), shutdownMenuItem
             });
 
@@ -647,6 +655,11 @@ namespace ListApp
 
             systemShutdown = true;
             Save();
+        }
+
+        private void OnShutdownNoSave(object sender, EventArgs e)
+        {
+            systemShutdown = true;
         }
 
         private void Save()
@@ -724,7 +737,7 @@ namespace ListApp
             SizeF sizeFloat = e.Graphics.MeasureString(shutdownMenuItem.Text, menuFont, 1000, stringFormat);
 
             // Get image so size can be computed
-            Bitmap bitmapImage = Properties.Resources.power_off_b;
+            Bitmap bitmapImage = Properties.Resources.power_off_c;
 
             // Add image height and width  to the text height and width when 
             // drawn with selected font (got that from measurestring method)
@@ -734,6 +747,119 @@ namespace ListApp
         }
 
         private void DrawShutdownMenuItem(object sender, DrawItemEventArgs e)
+        {
+            MenuItem shutdownMenuItem = (MenuItem)sender;
+
+            // Get standard menu font so that the text in this
+            // menu rectangle doesn't look funny with a
+            // different font
+            Font menuFont = contextFont;
+
+            // Get a brush to use for painting
+            SolidBrush menuBrush = null;
+
+            // Determine menu brush for painting
+            if (shutdownMenuItem.Enabled == false)
+            {
+                // disabled text if menu item not enabled
+                menuBrush = new SolidBrush(SystemColors.GrayText);
+            }
+            else // Normal (enabled) text
+            {
+                if ((e.State & DrawItemState.Selected) != 0)
+                {
+                    // Text color when selected (highlighted)
+                    menuBrush = new SolidBrush(Color.White);
+                    menuFont = contextHoverFont;
+                }
+                else
+                {
+                    // Text color during normal drawing
+                    menuBrush = new SolidBrush(Color.White);
+                }
+            }
+
+            // Center the text portion (out to side of image portion)
+            StringFormat stringFormat = new StringFormat();
+            //stringFormat.LineAlignment = System.Drawing.StringAlignment.Center;
+
+            // Get image associated with this menu item
+            Bitmap bitmapImage = Properties.Resources.power_off_c;
+
+            // Rectangle for image portion
+            Rectangle rectImage = e.Bounds;
+
+            // Set image rectangle same dimensions as image
+            rectImage.Width = bitmapImage.Width;
+            rectImage.Height = bitmapImage.Height;
+
+            // Rectanble for text portion
+            Rectangle rectText = e.Bounds;
+
+            // set wideth to x value of text portion
+            rectText.X += rectImage.Width;
+
+            // Start Drawing the menu rectangle
+
+            // Fill rectangle with proper background color
+            // [use this instead of e.DrawBackground() ]
+            if ((e.State & DrawItemState.Selected) != 0)
+            {
+                // Selected color
+                bitmapImage = Properties.Resources.power_on_c;
+                e.Graphics.FillRectangle(new SolidBrush(contextHoverColor), e.Bounds);
+            }
+            else
+            {
+                // Normal background color (when not selected)
+                e.Graphics.FillRectangle(new SolidBrush(contextColor), e.Bounds);
+            }
+
+            // Draw image portion
+            e.Graphics.DrawImage(bitmapImage, rectImage);
+
+            // Draw rectangle portion
+            //
+            // text portion
+            // using menu font
+            // using brush determined earlier
+            // Start at offset of image rect already drawn
+            // Total height,divided to be centered
+            // Formated string
+            e.Graphics.DrawString(shutdownMenuItem.Text,
+                   menuFont,
+                   menuBrush,
+                   e.Bounds.Left + bitmapImage.Width,
+                   e.Bounds.Top + ((e.Bounds.Height - menuFont.Height) / 2),
+                   stringFormat);
+        }
+
+        #endregion
+
+        #region shutdown (no save)
+
+        private void MeasureShutdownNoSaveMenuItem(object sender, MeasureItemEventArgs e)
+        {
+            MenuItem shutdownMenuItem = (MenuItem)sender;
+            // Get standard menu font so that the text in this
+            // menu rectangle doesn't look funny with a
+            // different font
+            Font menuFont = contextFont;
+
+            StringFormat stringFormat = new StringFormat();
+            SizeF sizeFloat = e.Graphics.MeasureString(shutdownMenuItem.Text, menuFont, 1000, stringFormat);
+
+            // Get image so size can be computed
+            Bitmap bitmapImage = Properties.Resources.power_off_b;
+
+            // Add image height and width  to the text height and width when 
+            // drawn with selected font (got that from measurestring method)
+            // to compute the total height and width needed for the rectangle
+            e.ItemWidth = (int)(Math.Ceiling(sizeFloat.Width) + bitmapImage.Width * 1.15);
+            e.ItemHeight = bitmapImage.Height; //(int)Math.Ceiling(sizeFloat.Height)
+        }
+
+        private void DrawShutdownNoSaveMenuItem(object sender, DrawItemEventArgs e)
         {
             MenuItem shutdownMenuItem = (MenuItem)sender;
 
