@@ -433,8 +433,8 @@ namespace ListApp
             currDoc.Range().ParagraphFormat.LineSpacingRule = Word.WdLineSpacing.wdLineSpaceSingle;
             currDoc.Range().ParagraphFormat.SpaceBefore = 0.0f;
             currDoc.Range().ParagraphFormat.SpaceAfter = 0.0f;
-            currDoc.Range().Font.Name = "Calibri";
-            currDoc.Range().Font.Size = 12;
+            currDoc.Range().Font.Name = "Cascadia Code";
+            currDoc.Range().Font.Size = 10;
             currDoc.ActiveWindow.Selection.WholeStory();
             currDoc.ActiveWindow.Selection.Copy();
             System.Diagnostics.Debug.WriteLine("currdoc copy");
