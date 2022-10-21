@@ -291,7 +291,7 @@ namespace ListApp
                     this.Activate();
                     int left = this.DesktopLocation.X;
                     int top = this.DesktopLocation.Y;
-                    Cursor.Position = new Point(left + 200, top + 200);
+                    Cursor.Position = new Point(left + 100, top + 120);
                     DoMouseClick();
 
                     SendKeys.SendWait("^a");
@@ -386,7 +386,7 @@ namespace ListApp
                     int left = this.DesktopLocation.X;
                     int top = this.DesktopLocation.Y;
 
-                    Cursor.Position = new Point(left + 200, top + 200);
+                    Cursor.Position = new Point(left + 100, top + 120);
                     DoMouseClick();
 
                     SendKeys.SendWait("^a");
@@ -532,6 +532,7 @@ namespace ListApp
             richTextBox1.SelectionLength = 2;
             richTextBox1.SelectedText = "";
         }
+
         #endregion
 
         #region Gui 
